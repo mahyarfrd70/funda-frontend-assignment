@@ -35,3 +35,4 @@ coverage
 # Vercel CLI project link (org/project IDs — sourced from GitHub secrets in
 # CI instead, see .github/workflows/deploy.yml)
 .vercel
+.env*

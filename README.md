@@ -42,12 +42,19 @@ composables — just props, slots, and Tailwind classes), plain Vue3+Vite Storyb
 correct fit; Nuxt-aware mocking (`<NuxtLink>` stubs, route mocks, etc.) can be added via
 decorators if a later story needs it, without adopting the whole module.
 
-- **Every atom gets a `ComponentName.stories.ts`** next to its `index.vue`, e.g.
+- **Every component gets a `ComponentName.stories.ts`** next to its `index.vue`, e.g.
   `components/atoms/Button/Button.stories.ts`.
 - **Tokens are shared, not duplicated**: `.storybook/preview.ts` imports the same
   `assets/css/main.css` the app uses, and `.storybook/main.ts` registers the same
   `@tailwindcss/vite` plugin — a component looks in Storybook exactly as it will in the
   app, no separate theme to keep in sync.
+- **Bridging Nuxt's conveniences into Storybook** (Storybook's Vite build isn't Nuxt):
+  `main.ts`'s `viteFinal` re-adds the `#shared/*` and `~/*` aliases; `preview.ts`
+  `import.meta.glob`s the atoms and registers them globally, so a molecule's story can
+  use `<AtomsBadge>` the way the app does. The one thing not bridged is Vue's
+  auto-imported composition APIs — components `import { computed } from 'vue'`
+  explicitly (valid in Nuxt too), so they render the same in both. `pnpm test:storybook`
+  runs every story as a real browser test and would catch a regression here.
 - **Mobile-first by default**: `preview.ts` sets the initial viewport to a phone
   (`iphone6`, 375px) — switch it from the toolbar to check `sm:`/`md:`/`lg:`.
 - **a11y addon** runs automatically on every story (panel shows violations; not yet
@@ -112,8 +119,9 @@ the tested components (95% coverage across them) rather than trusting a report t
 merely printed a summary.
 
 **Documented, not yet done:** `layouts/default.vue` has no test yet (trivial wrapper,
-lowest priority); integration tests for the `server/api/*` proxy routes and Playwright
-E2E for the real pages land once the Search/Detail pages exist.
+lowest priority); MSW-backed integration tests for the `server/api/*` routes (which now
+exist — see the Server API section) plus adding `server/**` to `coverage.include`;
+Playwright E2E once the real Search/Detail pages exist.
 
 ## Git hooks
 
@@ -143,7 +151,8 @@ via a real commit, and by confirming `git config core.hooksPath` actually points
 src/                            # Nuxt's srcDir — all application code lives here
   components/
     atoms/                      # Button, Badge, Input, Icon, Spinner...
-    molecules/                  # small groups of atoms doing one job (empty for now)
+    molecules/
+      ListingCard/index.vue     # one result in the grid — pure presentation, no routing
     organisms/
       AppHeader/index.vue        # self-contained, product-vocabulary sections —
       AppFooter/index.vue        # know about routes, may fetch data
@@ -153,13 +162,21 @@ src/                            # Nuxt's srcDir — all application code lives h
                                 # equivalent of React hooks. Auto-imported by Nuxt.
   utils/                        # pure, framework-agnostic functions (formatting,
                                 # parsing, URL helpers). No Vue, no HTTP calls.
-  pages/                        # routes ONLY — file-based routing, kept thin, composes
-                                # components/{atoms,molecules,organisms,pages}/*
+  pages/
+    index.vue                   # listing results — useFetch('/api/listings'), SSR
+                                # routes are thin, composing components/{atoms,...}/*
   layouts/                      # Nuxt page layouts (<NuxtLayout>), e.g. default.vue
   assets/css/                   # Tailwind entry + design tokens (tokens/*.css)
   app.vue                       # root component — <NuxtLayout><NuxtPage /></NuxtLayout>
-server/                         # Nitro backend: API proxy routes + server-only utils.
-                                # Separate runtime from src/ — not affected by srcDir.
+server/                         # Nitro backend — separate runtime, not affected by srcDir
+  api/
+    listings.get.ts             # GET /api/listings   — proxies Funda's koop feed
+    listings/[id].get.ts        # GET /api/listings/:id — proxies Funda's detail endpoint
+  utils/
+    funda.ts                    # the single place the API key is used (auto-imported)
+    normalize.ts                # raw Funda payload → clean view models (auto-imported)
+shared/
+  types/listing.ts              # the normalized types, imported by both server/ and pages
 public/                         # static files served as-is
 ```
 
@@ -231,6 +248,46 @@ produced `<AboutIntro>` but instead silently became `<AboutAboutIntro>` and fail
 resolve entirely (caught by actually booting the page, not by reasoning about it). Fixed
 by naming the component folder for its _role_, not by repeating an ancestor folder's
 name — `Intro`, not `AboutIntro`, since `pages/about/` already supplies that context.
+
+## Server API
+
+The Vue pages never call `partnerapi.funda.nl` directly. They can't: the Funda Partner
+API sends **no CORS headers** (verified by calling it), so a browser request is blocked
+outright — and the API key must not reach the browser anyway. Two thin Nitro routes sit
+in between:
+
+| Route                   | Proxies                                 | Returns            |
+| ----------------------- | --------------------------------------- | ------------------ |
+| `GET /api/listings`     | Funda "Listings for Sale" (`type=koop`) | `ListingSummary[]` |
+| `GET /api/listings/:id` | Funda "Listing Details"                 | `ListingDetail`    |
+
+The feed returns ~15 listings for a bare `type=koop` query — no pagination, kept
+deliberately simple. (Pagination / infinite scroll would be a documented "further
+improvement".)
+
+A page calls `useFetch('/api/listings')` — its **own** origin. During SSR that invokes
+the handler directly (no network hop); on client-side navigation the browser hits
+`/api/listings` same-origin (no CORS), and the route attaches the key server-side. The
+key lives in exactly one file, `server/utils/funda.ts`, read from `runtimeConfig` —
+never in a route handler's own code, never in the client bundle.
+
+**Raw → clean:** the feed is Dutch-keyed, dates arrive as `"/Date(...)/"` strings,
+feature values contain HTML fragments, and image URLs are `http://`. `server/utils/
+normalize.ts` maps all of that into the `#shared/types/listing` view models before it
+leaves the server — the client never sees a raw Funda shape. Notable transforms:
+`http://` → `https://` on every image (mixed-content would break them on an https
+deploy), CDN size-suffix swaps (`_klein` → `_middel`/`_groot`), price → `"€ 700.000
+k.k."`, `WGS84_X/Y` → `{ lat, lng }`, HTML stripped from `Kenmerken` values.
+
+**Error mapping:** upstream 404 → 404 (a sold/removed listing — the detail page can show
+"no longer available"); a non-UUID `:id` is rejected as 404 before any upstream call
+(Funda answers those with a `200` + XML error page, not a 404); rate limit → 429;
+anything else upstream → 502. Verified each path against the live API.
+
+**Not done yet:** no caching (Funda rate-limits hard — `defineCachedEventHandler` with a
+short TTL + SWR is the next change, kept separate so its own behavior gets verified); no
+integration tests yet (`server/**` isn't in `coverage.include` either — both land
+together, with MSW mocking the feed).
 
 ## Design tokens
 
