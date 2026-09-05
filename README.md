@@ -27,10 +27,11 @@ pnpm format           # prettier --write
 pnpm typecheck        # vue-tsc via `nuxt typecheck`
 pnpm storybook        # http://localhost:6006
 pnpm build-storybook  # static build → storybook-static/
-pnpm test             # unit/component tests, once
+pnpm test             # unit tests (src/ + server/), once
 pnpm test:watch       # same, watch mode
-pnpm coverage         # unit tests + coverage report
-pnpm test:all         # unit tests + every story run as a Vitest browser test
+pnpm coverage         # unit tests + coverage report (75% gate)
+pnpm test:all         # unit + every story run as a Vitest browser test
+pnpm test:e2e         # spins up Nuxt, hits /api/* against the live Funda API (slow, network)
 ```
 
 ## Storybook
@@ -96,11 +97,25 @@ per-component folder as its story, e.g. `components/atoms/Button/Button.spec.ts`
   alone isn't visible to `pnpm typecheck` / the editor's TS server. Two files, one
   reason: confirmed by reading `.nuxt/tsconfig.app.json`'s actual `include` glob rather
   than guessing why `toBeInTheDocument` was untyped.
-- Two Vitest **projects** run side by side (`vitest.config.ts`): `unit` (our
-  `*.spec.ts`, fast, jsdom-like) and `storybook` (every `*.stories.ts` executed as a
-  real browser test via Playwright — interaction coverage for free from stories
-  already written). `pnpm test` runs only `unit` (the fast, everyday command);
-  `pnpm test:all` runs both.
+- Three Vitest **projects** (`vitest.config.ts`):
+  - **`unit`** — `*.spec.ts` under `src/` _and_ `server/`, fast, jsdom-like. `pnpm test`.
+  - **`storybook`** — every `*.stories.ts` run as a real browser test via Playwright.
+    `pnpm test:all` runs `unit` + `storybook`.
+  - **`e2e`** — spins up the real Nuxt server and hits `/api/*` against the **live Funda
+    API**. Opt-in (`pnpm test:e2e`), out of `pnpm test` and the hooks — it's slow and
+    needs network.
+- **Server logic is unit-tested where it's pure.** `server/utils/normalize.ts` (raw feed
+  → view models — https rewrite, price formatting, `_klein`→`_groot`, HTML stripping,
+  `Bouwjaar` string→number, ...) is fully covered by `normalize.spec.ts`.
+  `server/utils/funda.ts` was refactored to expose `buildFundaUrl` / `mapFundaError` /
+  `isListingId` as pure functions so they're testable without a server; the `fundaFetch`
+  wrapper (`useRuntimeConfig` + `$fetch` glue) and the route handlers themselves —
+  genuinely just composition — are covered by the `e2e` project and excluded from the
+  coverage gate (`coverage.exclude` lists `server/api/**` with the reasoning inline).
+- **The `e2e` project earned its keep immediately:** it caught that the detail response's
+  `Id` is a numeric `GlobalId`, not the UUID — the UUID is in `InternalId`. The
+  normalizer was reading the wrong field. Unit tests with a hand-written fixture wouldn't
+  have found it; hitting the real API did.
 
 **A real dependency conflict, resolved by checking, not guessing:** the Storybook CLI's
 init pinned `vitest@5.0.0` (needed by `@vitest/coverage-v8@5.0.0`), but
@@ -118,10 +133,11 @@ only covered plain `.ts`/untested files. Verified by checking the report actuall
 the tested components (95% coverage across them) rather than trusting a report that
 merely printed a summary.
 
-**Documented, not yet done:** `layouts/default.vue` has no test yet (trivial wrapper,
-lowest priority); MSW-backed integration tests for the `server/api/*` routes (which now
-exist — see the Server API section) plus adding `server/**` to `coverage.include`;
-Playwright E2E once the real Search/Detail pages exist.
+**Documented, not yet done:** `layouts/default.vue` and the two page components
+(`pages/index.vue`, `pages/listings/[id].vue`) have no tests (pages are excluded from
+coverage; page-level behaviour is exercised via the `e2e` project + manual checks);
+full-browser Playwright E2E for the page flows (list → detail → gallery → map) — the
+current `e2e` project only covers the API routes.
 
 ## Git hooks
 
@@ -289,10 +305,11 @@ k.k."`, `WGS84_X/Y` → `{ lat, lng }`, HTML stripped from `Kenmerken` values.
 (Funda answers those with a `200` + XML error page, not a 404); rate limit → 429;
 anything else upstream → 502. Verified each path against the live API.
 
-**Not done yet:** no caching (Funda rate-limits hard — `defineCachedEventHandler` with a
-short TTL + SWR is the next change, kept separate so its own behavior gets verified); no
-integration tests yet (`server/**` isn't in `coverage.include` either — both land
-together, with MSW mocking the feed).
+**Tested:** `normalize.ts` fully via unit tests; `funda.ts`'s pure helpers via unit
+tests; the routes end-to-end against the live API via the `e2e` Vitest project (see
+Testing). **Not done yet:** no caching (Funda rate-limits hard —
+`defineCachedEventHandler` with a short TTL + SWR is the next change, kept separate so
+its own behaviour gets verified).
 
 ## Pages
 

@@ -47,7 +47,9 @@ interface RawFeatureGroup {
 }
 
 export interface RawDetail {
-  Id: string
+  // NB: on the detail response `Id` is a numeric GlobalId — the UUID that
+  // matches the listings feed (and the detail URL) is `InternalId`.
+  InternalId: string
   Adres: string
   Postcode: string
   Plaats: string
@@ -157,7 +159,7 @@ export function normalizeListingDetail(raw: RawDetail): ListingDetail {
   }))
 
   return {
-    id: raw.Id,
+    id: raw.InternalId,
     address: raw.Adres,
     postcode: raw.Postcode,
     city: raw.Plaats,

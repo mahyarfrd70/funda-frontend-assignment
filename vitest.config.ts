@@ -9,19 +9,32 @@ import { playwright } from '@vitest/browser-playwright'
 
 const dirname = import.meta.dirname
 
-// Two Vitest projects, run together with `pnpm test`:
-//  - "storybook": every *.stories.ts is executed as a browser test (via
-//    Playwright), catching interaction/render regressions in component
-//    variants — see https://storybook.js.org/docs/writing-tests/integrations/vitest-addon
-//  - "unit": plain *.spec.ts component/composable/util tests, run inside a
-//    real (but headless) Nuxt context via @nuxt/test-utils, so auto-imports,
-//    <NuxtLink>, etc. all resolve exactly like they do in the app.
+// Vitest projects:
+//  - "unit": plain *.spec.ts under src/ and server/ — component/composable/
+//    util tests, run inside a real (but headless) Nuxt context via
+//    @nuxt/test-utils so auto-imports, <NuxtLink> etc. resolve as in the app.
+//  - "storybook": every *.stories.ts executed as a browser test (Playwright).
+//  - "e2e": spins up the real Nuxt server and hits /api/* end to end. Opt-in
+//    (`pnpm test:e2e`) — it's slow and calls the live Funda API.
+//
+// `pnpm test` runs "unit"; `pnpm test:all` runs unit + storybook.
 export default defineConfig(async () => ({
   test: {
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.vue', 'src/**/*.ts'],
-      exclude: ['src/**/*.stories.ts', 'src/**/*.spec.ts', 'src/pages/**', 'src/app.vue'],
+      include: ['src/**/*.vue', 'src/**/*.ts', 'server/**/*.ts'],
+      exclude: [
+        'src/**/*.stories.ts',
+        'src/**/*.spec.ts',
+        'src/pages/**',
+        'src/app.vue',
+        'server/**/*.spec.ts',
+        // Route handlers are pure glue: param check → fundaFetch → normalize
+        // → return. Every branch (isListingId, buildFundaUrl, mapFundaError,
+        // the normalizers) is unit-tested in server/utils; the composition
+        // itself is covered by the "e2e" project against the live API.
+        'server/api/**',
+      ],
       // `all: true` instruments every included file, not just the ones a
       // test happens to import — otherwise an untested file simply doesn't
       // appear in the report, and the % looks better than it is. This is
@@ -52,10 +65,20 @@ export default defineConfig(async () => ({
       await defineVitestProject({
         test: {
           name: 'unit',
-          include: ['src/**/*.spec.ts'],
+          include: ['src/**/*.spec.ts', 'server/**/*.spec.ts'],
           setupFiles: ['./test/vitest-setup.ts'],
         },
       }),
+      {
+        extends: true,
+        test: {
+          name: 'e2e',
+          include: ['test/e2e/**/*.spec.ts'],
+          environment: 'node',
+          testTimeout: 120_000,
+          hookTimeout: 120_000,
+        },
+      },
     ],
   },
 }))

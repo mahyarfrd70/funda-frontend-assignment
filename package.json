@@ -18,11 +18,12 @@
     "test": "vitest run --project unit",
     "test:watch": "vitest --project unit",
     "test:storybook": "vitest run --project storybook",
-    "test:all": "vitest run",
+    "test:all": "vitest run --project unit --project storybook",
     "coverage": "vitest run --project unit --coverage",
     "prepare": "husky",
-    "docker:build": "docker build -t funda-frontend-assignment .",
-    "docker:run": "docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment"
+    "docker:build": "docker build -f Dockerfile.vercel -t funda-frontend-assignment .",
+    "docker:run": "docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment",
+    "test:e2e": "vitest run --project e2e"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

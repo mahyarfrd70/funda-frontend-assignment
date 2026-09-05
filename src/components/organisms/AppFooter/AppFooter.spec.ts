@@ -15,4 +15,10 @@ describe('AppFooter', () => {
 
     expect(screen.getByText(/not affiliated with funda/i)).toBeInTheDocument()
   })
+
+  it('is purely informational — contains no links', async () => {
+    await renderSuspended(AppFooter)
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
 })
