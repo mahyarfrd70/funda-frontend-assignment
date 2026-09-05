@@ -151,8 +151,12 @@ via a real commit, and by confirming `git config core.hooksPath` actually points
 src/                            # Nuxt's srcDir — all application code lives here
   components/
     atoms/                      # Button, Badge, Input, Icon, Spinner...
-    molecules/
-      ListingCard/index.vue     # one result in the grid — pure presentation, no routing
+    molecules/                  # pure presentation, no routing/data — each with .spec + .stories
+      ListingCard/               #   one result in the grid
+      PhotoGallery/              #   main photo + thumbnail strip, local `current` state
+      KeyFacts/                  #   the facts grid on the detail page
+      FeatureGroups/             #   Funda's grouped "Kenmerken" as titled lists
+      PropertyMap/               #   Leaflet + OSM map, client-only (dynamic import in onMounted)
     organisms/
       AppHeader/index.vue        # self-contained, product-vocabulary sections —
       AppFooter/index.vue        # know about routes, may fetch data
@@ -162,9 +166,10 @@ src/                            # Nuxt's srcDir — all application code lives h
                                 # equivalent of React hooks. Auto-imported by Nuxt.
   utils/                        # pure, framework-agnostic functions (formatting,
                                 # parsing, URL helpers). No Vue, no HTTP calls.
-  pages/
+  pages/                        # routes — thin, compose components/{atoms,molecules,...}/*
     index.vue                   # listing results — useFetch('/api/listings'), SSR
-                                # routes are thin, composing components/{atoms,...}/*
+    listings/[id].vue           # listing detail — useFetch('/api/listings/:id'), SSR;
+                                # 404 (sold/removed) re-thrown as a fatal error
   layouts/                      # Nuxt page layouts (<NuxtLayout>), e.g. default.vue
   assets/css/                   # Tailwind entry + design tokens (tokens/*.css)
   app.vue                       # root component — <NuxtLayout><NuxtPage /></NuxtLayout>
@@ -288,6 +293,31 @@ anything else upstream → 502. Verified each path against the live API.
 short TTL + SWR is the next change, kept separate so its own behavior gets verified); no
 integration tests yet (`server/**` isn't in `coverage.include` either — both land
 together, with MSW mocking the feed).
+
+## Pages
+
+Both pages `await useFetch('/api/…')` — SSR-rendered, the Funda key never in the browser,
+the LCP image (`fetchpriority="high"`) already in the initial HTML.
+
+- **`/` — listing results.** Grid of `<NuxtLink><MoleculesListingCard></NuxtLink>`.
+  Loading skeleton, error + retry, empty state.
+- **`/listings/[id]` — listing detail.** Photo gallery, key-facts grid, description,
+  grouped features, and the location map. A sold/removed listing (upstream 404) is
+  re-thrown as a fatal `createError` so Nuxt serves a real 404, not a 200 with an empty
+  page.
+
+**The map** is Leaflet + OpenStreetMap tiles — no API key, no signup. Zoom in/out
+(buttons, scroll wheel, pinch) are Leaflet defaults. It's client-only by construction:
+Leaflet touches `window`, so it's `import()`ed inside `onMounted` (which also keeps it
+out of the listings-page bundle — verified), and the page wraps it in `<ClientOnly>` with
+a same-height fallback so the map appearing causes no layout shift. An unmount guard
+after the dynamic import stops `L.map(null)` throwing on fast navigation — a real bug the
+Storybook browser test caught.
+
+**Documented, not done:** a fullscreen lightbox for the gallery; an accordion for the
+feature groups (needs a headless UI lib); a sticky mobile price/CTA bar; the Core Web
+Vitals work from the analysis (eager LCP image on the grid, `preconnect` to the image
+CDN, response caching).
 
 ## Design tokens
 
