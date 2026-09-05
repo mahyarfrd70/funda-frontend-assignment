@@ -15,14 +15,4 @@ describe('AppHeader', () => {
 
     expect(screen.getByRole('link', { name: /Woningaanbod/i })).toHaveAttribute('href', '/')
   })
-
-  it('renders the temporary nav links to /about and a sample listing', async () => {
-    await renderSuspended(AppHeader)
-
-    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about')
-    expect(screen.getByRole('link', { name: 'Sample listing' })).toHaveAttribute(
-      'href',
-      '/listings/demo-123',
-    )
-  })
 })
