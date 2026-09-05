@@ -20,7 +20,9 @@
     "test:storybook": "vitest run --project storybook",
     "test:all": "vitest run",
     "coverage": "vitest run --project unit --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:build": "docker build -t funda-frontend-assignment .",
+    "docker:run": "docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+#
+# Vercel-specific entrypoint. The filename is required to be exactly this —
+# Vercel auto-detects `Dockerfile.vercel` (or `Containerfile.vercel`) at the
+# project root and runs the whole app as a container-backed Vercel Function
+# on Fluid compute, rather than using its normal framework build pipeline.
+# See: https://vercel.com/docs/functions/container-images
+#
+# Functionally the same three-stage build as ../Dockerfile (verified there:
+# `pnpm build` produces a fully self-contained .output/, no pnpm or source
+# needed at runtime). The one real difference: PORT is left unset here —
+# Vercel decides what port to route traffic to (project setting, default
+# 80) and injects it into the running container; hardcoding one would fight
+# that. Our Nitro server already reads `process.env.PORT` at startup either
+# way (confirmed by starting it locally on a non-default port).
+
+FROM node:24-alpine AS deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+FROM node:24-alpine AS build
+WORKDIR /app
+RUN corepack enable
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN pnpm build
+
+FROM node:24-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production \
+    HOST=0.0.0.0
+COPY --from=build /app/.output ./.output
+USER node
+CMD ["node", ".output/server/index.mjs"]

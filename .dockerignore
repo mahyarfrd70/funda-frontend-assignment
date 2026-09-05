@@ -1,0 +1,24 @@
+# Dependencies & build output — reinstalled/rebuilt inside the image
+node_modules
+.output
+.nuxt
+.data
+.cache
+
+# VCS / editor / OS
+.git
+.github
+.vscode
+.idea
+.DS_Store
+
+# Local-only tooling, never needed in the image
+.husky
+storybook-static
+coverage
+*.log
+
+# Secrets — never baked into the image; passed at `docker run` time instead
+.env
+.env.*
+!.env.example

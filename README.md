@@ -261,4 +261,86 @@ practice.
 
 ## Deployment
 
-Planned: Vercel, via Nitro's `vercel` preset. Documented once wired up.
+**Chosen path: Vercel, running the Docker image directly** — Vercel added first-class
+support for this in June 2026 ([Container Images](https://vercel.com/docs/functions/container-images)):
+a `Dockerfile.vercel` (or `Containerfile.vercel`) at the repo root is auto-detected and
+run as a container-backed Vercel Function on Fluid compute, instead of Vercel's normal
+framework build pipeline. This is a different mechanism from a plain `Dockerfile` — see
+below for why there are two.
+
+`.github/workflows/deploy.yml` runs on every push/PR (`quality`: lint, typecheck,
+coverage — the same three gates as the local pre-commit/pre-push hooks, so a bypassed
+local hook still can't reach production) and, only on a push to `main`, deploys via the
+Vercel CLI:
+
+```bash
+vercel deploy --prod --yes \
+  --env NUXT_FUNDA_API_KEY="$NUXT_FUNDA_API_KEY" \
+  --env NUXT_FUNDA_API_BASE="https://partnerapi.funda.nl/feeds/Aanbod.svc/json"
+```
+
+**Required GitHub repo secrets** (Settings → Secrets and variables → Actions):
+
+| Secret                               | Where to get it                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`                       | Vercel dashboard → Account Settings → Tokens → Create                                                                                             |
+| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | Run `vercel link` locally once — writes `.vercel/project.json` with both (gitignored; CI doesn't need the file, just these two values as secrets) |
+| `NUXT_FUNDA_API_KEY`                 | The assignment's API key (or a real one later)                                                                                                    |
+
+**How the key stays out of the repo and out of the browser:**
+
+- _Repo:_ `--env` reads `${{ secrets.NUXT_FUNDA_API_KEY }}` at deploy time only — GitHub
+  Actions redacts the value from all logs automatically, and it's never written to a
+  file that gets committed. `.env` itself stays local-only (gitignored) and is never
+  read by CI at all.
+- _Browser:_ this was already true before Docker/Vercel entered the picture — the key
+  lives in `runtimeConfig.fundaApiKey` (`nuxt.config.ts`), not `runtimeConfig.public`,
+  so Nuxt never serializes it into the client bundle or hydration payload. Deployment
+  mechanism doesn't change this; it's a property of how the app reads the key.
+
+**Two Dockerfiles, two different jobs:**
+
+- **`Dockerfile.vercel`** — required filename for Vercel's container-Function path
+  above; leaves `PORT` unset so Vercel can inject its own (default 80) rather than
+  fighting a hardcoded one.
+- **`Dockerfile`** — generic, for any platform that runs a container image directly
+  (Fly.io, Railway, Render, Cloud Run, a VPS) — fixes `PORT=3000` since there, we're the
+  ones deciding it. Not used by the Vercel path, kept for that alternative.
+
+```bash
+pnpm docker:build   # docker build -t funda-frontend-assignment .
+pnpm docker:run     # docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment
+# or, equivalently:
+docker compose up --build
+```
+
+**Three stages, final image ships only `.output/`:**
+
+1. `deps` — `pnpm install --frozen-lockfile`, cached independently of source changes
+   (`--ignore-scripts`, since `nuxt.config.ts` isn't in this stage yet for the
+   `postinstall: nuxt prepare` hook to run against).
+2. `build` — full source copied in, `pnpm build` produces `.output/`.
+3. `runtime` — copies **only** `.output/` into a fresh `node:24-alpine`. No pnpm, no
+   source, no dev dependencies in the final image.
+
+That last point isn't an assumption — verified directly by running `pnpm build`,
+inspecting the result, and running the server standalone before writing the Dockerfile
+around it: Nitro's `node-server` preset (Nuxt's default) copies every runtime dependency
+it needs into `.output/server/node_modules` itself. The whole `.output/` folder for this
+app is ~2.7 MB, and `node .output/server/index.mjs` runs correctly with nothing else
+present, respecting `PORT`/`HOST` env vars (confirmed by actually starting it on a
+non-default port and curling it).
+
+**What's genuinely unverified:** this environment has neither Docker/Podman/Colima nor a
+Vercel account connected, so none of `docker build`, `docker run`, or an actual
+`vercel deploy` have been executed — only the Node-level behavior both Dockerfiles
+depend on has been (see above), plus reading Vercel's current official docs directly
+(fetched, not recalled from training data, since this container-Functions feature
+shipped after that cutoff) for the `Dockerfile.vercel` filename requirement, the `--env`
+flag's runtime-injection behavior, and the `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` env-var
+convention. Once the three `VERCEL_*` secrets are set, push to `main` and check the
+Action run and the deployment URL; report back anything that doesn't match.
+
+**Secrets:** `.env` is never copied into the image (`.dockerignore` excludes it) — pass
+`NUXT_FUNDA_API_KEY`/`NUXT_FUNDA_API_BASE` at `docker run`/`docker compose` time via
+`--env-file` (as the scripts above do) or your host's own secret/env mechanism.

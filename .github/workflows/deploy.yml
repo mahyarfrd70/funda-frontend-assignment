@@ -1,0 +1,76 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Runs on every push and PR — the same three checks the local pre-commit/
+  # pre-push hooks run, so a bypassed local hook (--no-verify) still can't
+  # reach production without passing here.
+  quality:
+    name: Lint, typecheck, coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # `coverage`, not `test` — also enforces the 75% threshold
+      # (vitest.config.ts), same gate as the local pre-push hook.
+      - run: pnpm coverage
+
+  # Only on a real push to main — never on pull_request (a fork PR has no
+  # access to repo secrets anyway, so this would fail even if it tried),
+  # and never before `quality` has passed.
+  deploy:
+    name: Deploy container to Vercel
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel (production)
+        id: deploy
+        env:
+          # VERCEL_TOKEN is read automatically by the CLI; ORG_ID/PROJECT_ID
+          # tell it which project to target without a committed
+          # .vercel/project.json (see README's Deployment section for how
+          # to obtain all three).
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -e
+          # --env sets a runtime env var for THIS deployment only — sourced
+          # straight from the GitHub secret, never written to any file in
+          # the repo. GitHub Actions redacts the secret's value from these
+          # logs automatically. The key itself stays server-only inside the
+          # app regardless of how it's deployed: it's read via Nuxt's
+          # runtimeConfig (not runtimeConfig.public), which is never sent
+          # to the browser bundle — see nuxt.config.ts.
+          url=$(vercel deploy \
+            --prod \
+            --yes \
+            --env NUXT_FUNDA_API_KEY="${{ secrets.NUXT_FUNDA_API_KEY }}" \
+            --env NUXT_FUNDA_API_BASE="https://partnerapi.funda.nl/feeds/Aanbod.svc/json")
+          echo "Deployed: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
