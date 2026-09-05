@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   // stay at the repo root — Nitro is a separate runtime, not app code.
   srcDir: 'src',
 
-  modules: ['@nuxt/eslint'],
+  modules: ['@nuxt/eslint', '@vercel/speed-insights'],
 
   // Strict TS everywhere. Full type-checking runs in CI via `pnpm typecheck`
   // (kept out of the dev server so HMR stays fast).
