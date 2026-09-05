@@ -1,0 +1,15 @@
+/**
+ * Typography tokens. The base type scale (text-xs..text-4xl) is
+ * intentionally left as Tailwind's default — it's already a solid,
+ * systemic scale and there's no reason to re-invent it. This file is for
+ * additions specific to this app's UI, e.g. the large price display used on
+ * listing cards and the detail page.
+ *
+ * `--text-{name}` and `--text-{name}--line-height` is Tailwind v4's paired
+ * key convention — defining both together gives `text-price` a matched
+ * line-height automatically.
+ */
+@theme {
+  --text-price: 1.5rem;
+  --text-price--line-height: 2rem;
+}
