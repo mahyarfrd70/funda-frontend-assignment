@@ -115,6 +115,28 @@ merely printed a summary.
 lowest priority); integration tests for the `server/api/*` proxy routes and Playwright
 E2E for the real pages land once the Search/Detail pages exist.
 
+## Git hooks
+
+[Husky](https://typicode.github.io/husky/) enforces the same checks locally that would
+otherwise only be caught in CI — `pnpm install` wires them up automatically via the
+`prepare` script, nothing to run manually after cloning.
+
+- **`pre-commit`** — `pnpm lint && pnpm typecheck && pnpm test`. Fails (blocking the
+  commit) on the first failing step, since the hook script starts with `set -e`.
+- **`pre-push`** — `pnpm coverage`, which fails if statements/branches/functions/lines
+  drop below **75%**. The threshold is enforced by Vitest itself
+  (`vitest.config.ts` → `test.coverage.thresholds`), not a custom parsing script.
+  Coverage uses `all: true` — every file matched by `coverage.include` counts, even
+  ones no test happens to import — otherwise an untested file would simply be absent
+  from the report instead of dragging the score down, and the gate would be
+  decorative. Verified this is a real gate, not just a report: temporarily set
+  `thresholds.lines` to `100` and confirmed `pnpm coverage` actually exits non-zero
+  before reverting it.
+
+Both hooks were verified by invoking them directly (`sh .husky/pre-commit`) rather than
+via a real commit, and by confirming `git config core.hooksPath` actually points at
+`.husky/_` — proof Git will invoke them, not just that the scripts run in isolation.
+
 ## Project structure
 
 ```

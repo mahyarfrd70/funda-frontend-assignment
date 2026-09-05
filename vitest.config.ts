@@ -22,6 +22,18 @@ export default defineConfig(async () => ({
       provider: 'v8',
       include: ['src/**/*.vue', 'src/**/*.ts'],
       exclude: ['src/**/*.stories.ts', 'src/**/*.spec.ts', 'src/pages/**', 'src/app.vue'],
+      // `all: true` instruments every included file, not just the ones a
+      // test happens to import — otherwise an untested file simply doesn't
+      // appear in the report, and the % looks better than it is. This is
+      // what makes the 75% pre-push gate (below) a meaningful check rather
+      // than one that only ever measures files someone already tested.
+      all: true,
+      thresholds: {
+        statements: 75,
+        branches: 75,
+        functions: 75,
+        lines: 75,
+      },
     },
     projects: [
       {

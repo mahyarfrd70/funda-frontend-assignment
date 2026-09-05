@@ -1,0 +1,6 @@
+set -e
+
+# Coverage thresholds are enforced by Vitest itself (vitest.config.ts,
+# test.coverage.thresholds) — this fails with a non-zero exit code if any
+# metric drops below 75%, which stops the push.
+pnpm coverage

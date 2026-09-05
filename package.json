@@ -19,7 +19,8 @@
     "test:watch": "vitest --project unit",
     "test:storybook": "vitest run --project storybook",
     "test:all": "vitest run",
-    "coverage": "vitest run --project unit --coverage"
+    "coverage": "vitest run --project unit --coverage",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -47,6 +48,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-storybook": "10.6.0",
     "happy-dom": "20.14.0",
+    "husky": "9.1.7",
     "playwright": "1.63.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
