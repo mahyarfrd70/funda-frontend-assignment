@@ -2,7 +2,9 @@
 // fetched via the Nitro proxy so the Funda key stays server-side
 const route = useRoute()
 
-const { data: listing, error } = await useFetch(`/api/listings/${route.params.id}`)
+const { data: listing, error } = await useFetch(
+  () => `/api/listings/${route.params.id}`,
+)
 
 if (error.value) {
   throw createError({
