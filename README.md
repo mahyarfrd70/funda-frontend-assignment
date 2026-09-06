@@ -192,8 +192,8 @@ hex or pixel value; they only reach for tokens.
 - **`colors.css`** — a custom `brand-*` ramp for the one accent colour (only the steps in
   actual use); **semantic** surfaces (`surface`, `surface-muted`, `border`, `foreground`,
   `foreground-muted`, `on-brand`) that alias Tailwind's neutral scale so components ask for
-  meaning, not a shade; status colours (`success` / `warning` / `danger` / `info`) aliased
-  to Tailwind's built-in palette.
+  meaning, not a shade; status colours (`success` / `danger`) aliased to Tailwind's
+  built-in palette.
 - **`spacing.css`** — `gutter` (mobile page-edge padding) and `section` (vertical rhythm),
   used as `px-gutter`, `py-section`.
 - **`typography.css`** — base scale is Tailwind's default; adds `text-price` for the price.

@@ -11,6 +11,12 @@ const features = computed(() => {
   if (listing.hasFloorPlan) items.push('Plattegrond')
   return items
 })
+
+const status = computed(() =>
+  listing.isSold
+    ? { label: 'Verkocht', tone: 'danger' as const }
+    : { label: 'Beschikbaar', tone: 'success' as const },
+)
 </script>
 
 <template>
@@ -32,8 +38,8 @@ const features = computed(() => {
         Geen foto
       </div>
 
-      <span v-if="listing.isSold" class="absolute top-3 left-3">
-        <AtomsBadge tone="danger">Verkocht</AtomsBadge>
+      <span class="absolute top-3 left-3">
+        <AtomsBadge :tone="status.tone">{{ status.label }}</AtomsBadge>
       </span>
     </div>
 

@@ -14,7 +14,5 @@
   --color-on-brand: var(--color-neutral-50);
 
   --color-success: var(--color-emerald-600);
-  --color-warning: var(--color-amber-500);
   --color-danger: var(--color-red-600);
-  --color-info: var(--color-blue-600);
 }

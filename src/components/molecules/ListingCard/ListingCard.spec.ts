@@ -43,13 +43,15 @@ describe('ListingCard', () => {
     expect(screen.queryByText(/perceel/)).not.toBeInTheDocument()
   })
 
-  it('shows a "Verkocht" badge only when the listing is sold', async () => {
+  it('badges every listing with its availability status', async () => {
     const { unmount } = await renderSuspended(ListingCard, { props: { listing: base } })
+    expect(screen.getByText('Beschikbaar')).toBeInTheDocument()
     expect(screen.queryByText('Verkocht')).not.toBeInTheDocument()
     unmount()
 
     await renderSuspended(ListingCard, { props: { listing: { ...base, isSold: true } } })
     expect(screen.getByText('Verkocht')).toBeInTheDocument()
+    expect(screen.queryByText('Beschikbaar')).not.toBeInTheDocument()
   })
 
   it('shows only the feature badges present on the listing', async () => {

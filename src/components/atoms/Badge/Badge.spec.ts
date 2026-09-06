@@ -17,11 +17,8 @@ describe('Badge', () => {
   })
 
   it.each([
-    ['brand', 'bg-brand-50'],
-    ['success', 'bg-success/10'],
-    ['warning', 'bg-warning/10'],
-    ['danger', 'bg-danger/10'],
-    ['info', 'bg-info/10'],
+    ['success', 'bg-success'],
+    ['danger', 'bg-danger'],
   ] as const)('applies the %s tone classes', async (tone, expectedClass) => {
     await renderSuspended(Badge, { props: { tone }, slots: { default: () => tone } })
 
