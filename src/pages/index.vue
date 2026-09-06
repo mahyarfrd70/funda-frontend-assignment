@@ -12,41 +12,11 @@ useSeoMeta({
   <div class="mx-auto max-w-6xl px-gutter py-section sm:px-8 lg:px-12">
     <h1 class="text-2xl font-semibold text-foreground sm:text-3xl">Huizen te koop</h1>
 
-    <div v-if="error" class="mt-8 rounded-card border border-border bg-surface p-6 shadow-card">
-      <p class="font-medium text-foreground">Kon het woningaanbod niet laden.</p>
-      <p class="mt-1 text-sm text-foreground-muted">Probeer het later opnieuw.</p>
-      <AtomsButton class="mt-4" variant="secondary" @click="refresh()"
-        >Opnieuw proberen</AtomsButton
-      >
-    </div>
-
-    <ul
-      v-else-if="status === 'pending'"
-      class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-    >
-      <li
-        v-for="n in 6"
-        :key="n"
-        class="aspect-[4/3] animate-pulse rounded-card bg-surface-muted"
-      />
-    </ul>
-
+    <ListingResultsErrorState v-if="error" class="mt-8" @retry="refresh()" />
+    <ListingResultsSkeleton v-else-if="status === 'pending'" class="mt-8" />
     <p v-else-if="!listings?.length" class="mt-8 text-foreground-muted">
       Er zijn op dit moment geen woningen beschikbaar.
     </p>
-
-    <template v-else>
-      <p class="mt-1 text-sm text-foreground-muted">{{ listings.length }} woningen</p>
-      <ul class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <li v-for="listing in listings" :key="listing.id">
-          <NuxtLink
-            :to="`/listings/${listing.id}`"
-            class="block rounded-card focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-          >
-            <MoleculesListingCard :listing="listing" />
-          </NuxtLink>
-        </li>
-      </ul>
-    </template>
+    <ListingResultsGrid v-else :listings="listings" class="mt-1" />
   </div>
 </template>

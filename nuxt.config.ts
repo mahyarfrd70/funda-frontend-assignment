@@ -19,8 +19,13 @@ export default defineNuxtConfig({
     typeCheck: false,
   },
 
-  // pathPrefix keeps the tier in the tag name: atoms/Button → <AtomsButton>
-  components: [{ path: '~/components', pathPrefix: true }],
+  // pathPrefix keeps the tier in the tag name: atoms/Button → <AtomsButton>.
+  // '~/components/pages' is a second root so page-specific components read as
+  // <ListingDetailHeader>, not <PagesListingDetailHeader>.
+  components: [
+    { path: '~/components', pathPrefix: true, ignore: ['pages/**'] },
+    '~/components/pages',
+  ],
 
   runtimeConfig: {
     fundaApiKey: '',

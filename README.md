@@ -87,7 +87,10 @@ Three Vitest **projects** (`vitest.config.ts`):
   Testing Library convention (`getByRole`, `getByText`) — asserting on what a user or
   assistive tech perceives, not on implementation details.
 - **`storybook`** — every `*.stories.ts` is executed as a real browser test (Playwright),
-  catching render/interaction regressions in each component variant.
+  catching render/interaction regressions in each component variant. Stories cover the
+  reusable design-system tiers (atoms / molecules / organisms); the one-off
+  `components/pages/*` components are verified through the page integration tests and their
+  own `*.spec.ts` instead.
 - **`e2e`** — boots the real Nuxt server and calls `/api/listings` and
   `/api/listings/:id` end to end against the live Funda feed. Opt-in (`pnpm test:e2e`),
   kept out of `pnpm test` and the hooks because it's slow and needs network.
@@ -119,6 +122,9 @@ src/
     atoms/                    # Button, Badge
     molecules/                # ListingCard, PhotoGallery, KeyFacts, FeatureGroups, PropertyMap
     organisms/                # AppHeader, AppFooter
+    pages/                    # one-page composition, split out of the route files
+      listing-results/        #   Grid, Skeleton, ErrorState        → <ListingResultsGrid> …
+      listing-detail/         #   Header, Section, Description, Location → <ListingDetailHeader> …
   layouts/
     default.vue               # header + <slot> + footer
   pages/
@@ -138,22 +144,24 @@ shared/
   types/listing.ts            # the normalized types — imported by server/ and pages
 ```
 
-Each component lives in its own folder as `ComponentName/index.vue`, with its
-`*.spec.ts` and `*.stories.ts` alongside it.
+Each component lives in its own folder as `ComponentName/index.vue`, with its `*.spec.ts`
+(and, for the design-system tiers, its `*.stories.ts`) alongside it.
 
 ### Atomic Design — with rules, not just names
 
 The component tiers each have hard constraints:
 
-| Tier          | May import       | Data layer / routes?                     | In one sentence                                                       |
-| ------------- | ---------------- | ---------------------------------------- | -------------------------------------------------------------------- |
-| **atoms**     | nothing          | ❌                                       | smallest useful piece — props in, emits out, renders with zero context |
-| **molecules** | atoms            | ❌                                       | a small group of atoms doing one job; presentation logic only        |
-| **organisms** | molecules, atoms | ✅ may fetch / read stores / know routes | a self-contained section named in product vocabulary                 |
+| Tier          | May import              | Data layer / routes?                     | In one sentence                                                        |
+| ------------- | ----------------------- | ---------------------------------------- | --------------------------------------------------------------------- |
+| **atoms**     | nothing                 | ❌                                       | smallest useful piece — props in, emits out, renders with zero context |
+| **molecules** | atoms                   | ❌                                       | a small group of atoms doing one job; presentation logic only        |
+| **organisms** | molecules, atoms        | ✅ may fetch / read stores / know routes | a self-contained section named in product vocabulary                 |
+| **pages**     | organisms, molecules, atoms, each other | presentation only (the route file still owns the fetch) | a chunk of **exactly one** route's markup, lifted out to keep that route file small; the moment a second route needs it, it moves down a tier |
 
-Page-level composition (fetching, wiring the tiers together) lives in the route files
-themselves — `src/pages/index.vue` and `src/pages/listings/[id].vue`. A `components/pages/`
-tier for single-page components can be added the moment one is genuinely reused.
+The route files (`src/pages/*.vue`) keep the data layer — `useFetch`, the error guard,
+`useSeoMeta` — and the top-level state branching (`error` / `pending` / `empty` / results),
+then delegate each block of markup to a `components/pages/*` component. So `index.vue` is
+~20 lines and reads as a table of contents.
 
 Examples of the rules in action:
 
@@ -167,10 +175,11 @@ Examples of the rules in action:
   client-only by construction (Leaflet is `import()`ed inside `onMounted`), which also
   keeps it out of the listings-page bundle.
 
-Nuxt names components by their folder path (`components: [{ path: '~/components',
-pathPrefix: true }]`), so the tier is visible at the call site:
+Nuxt names components by their folder path, so the tier is visible at the call site:
 `components/atoms/Button/index.vue` → `<AtomsButton>`,
-`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`.
+`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`. `components/pages/` is
+registered as a second root (`nuxt.config.ts`), so its components drop the `Pages` prefix
+and read as their route name: `pages/listing-detail/Header/index.vue` → `<ListingDetailHeader>`.
 
 ### Design system tokens
 

@@ -31,40 +31,22 @@ useSeoMeta({
 
     <MoleculesPhotoGallery :photos="listing.photos" :alt="listing.address" class="mt-4" />
 
-    <header class="mt-6">
-      <p class="text-price font-semibold text-foreground">{{ listing.priceLabel }}</p>
-      <h1 class="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">{{ listing.address }}</h1>
-      <p class="text-foreground-muted">{{ listing.postcode }} {{ listing.city }}</p>
-      <AtomsBadge v-if="listing.isSold" tone="danger" class="mt-2">Verkocht</AtomsBadge>
-    </header>
+    <ListingDetailHeader :listing="listing" class="mt-6" />
 
-    <section class="mt-8">
-      <h2 class="sr-only">Kenmerken</h2>
+    <ListingDetailSection title="Kenmerken" sr-only class="mt-8">
       <MoleculesKeyFacts :listing="listing" />
-    </section>
+    </ListingDetailSection>
 
-    <section v-if="listing.description" class="mt-8">
-      <h2 class="font-semibold text-foreground">Omschrijving</h2>
-      <p class="mt-2 whitespace-pre-line text-foreground-muted">{{ listing.description }}</p>
-    </section>
+    <ListingDetailDescription v-if="listing.description" :text="listing.description" class="mt-8" />
 
-    <section v-if="listing.features.length" class="mt-8">
-      <h2 class="font-semibold text-foreground">Alle kenmerken</h2>
+    <ListingDetailSection v-if="listing.features.length" title="Alle kenmerken" class="mt-8">
       <MoleculesFeatureGroups :groups="listing.features" class="mt-4" />
-    </section>
+    </ListingDetailSection>
 
-    <section class="mt-8">
-      <h2 class="font-semibold text-foreground">Locatie</h2>
-      <ClientOnly>
-        <MoleculesPropertyMap
-          :coordinates="listing.coordinates"
-          :label="listing.address"
-          class="mt-4"
-        />
-        <template #fallback>
-          <div class="mt-4 h-64 animate-pulse rounded-card bg-surface-muted sm:h-80" />
-        </template>
-      </ClientOnly>
-    </section>
+    <ListingDetailLocation
+      :coordinates="listing.coordinates"
+      :label="listing.address"
+      class="mt-8"
+    />
   </article>
 </template>
