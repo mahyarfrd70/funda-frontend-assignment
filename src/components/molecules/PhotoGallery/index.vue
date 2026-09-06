@@ -21,7 +21,7 @@ function step(delta: number) {
         width="900"
         height="600"
         fetchpriority="high"
-        class="h-full w-full object-cover"
+        class="h-full w-full object-contain"
       />
 
       <button
