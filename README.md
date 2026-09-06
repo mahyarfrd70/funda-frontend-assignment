@@ -13,7 +13,7 @@ ESLint / Prettier / Husky · deployed to Vercel as a container.
 ---
 
 ## Issues faced & decisions made
-#### Security — keep the API key off the client
+#### Security: keep the API key off the client
 
 The brief ships an API key, and it must not appear in the browser **or** in the repo. So
 the pages never call Funda directly: two thin **Nitro API routes** (`server/api/listings*`)
@@ -25,7 +25,7 @@ For deployment I added a **GitHub Actions** workflow that builds and ships the a
 Vercel and injects the key from a **repository secret** on the production environment — so
 the key is never committed and never sent to the client.
 
-### UX — the property's map / floor-plan images were being cropped
+### UX: the property's map / floor-plan images were being cropped
 
 The detail-page gallery used `object-cover`, which fills the frame and clips the edges.
 That's fine for photos, but several images are the **plattegrond / location map**, where
@@ -41,7 +41,7 @@ frame height so there's no layout shift.
 <img width="1058" height="896" alt="Screenshot 2026-09-06 at 13 11 37" src="https://github.com/user-attachments/assets/10c90f3b-7134-4d6a-8f85-0d1e279d8f29" />
 
 
-### Performance — the gallery downloaded full-size images on load
+### Performance: the gallery downloaded full-size images on load
 
 Every gallery image was loaded at `_groot` (large) size as soon as a detail page opened,
 so the browser pulled megabytes of images before the visitor did anything. Funda serves
@@ -146,8 +146,12 @@ pnpm test          # everyday: fast unit tests
 pnpm test:all      # unit + storybook
 pnpm coverage      # + coverage, 75% gate
 pnpm test:api:e2e  # live API contract          (needs the key)
-pnpm test:web:e2e  # Playwright, real browser   (needs the key + `pnpm exec playwright install chromium`)
+pnpm test:web:e2e  # Playwright, real browser   (needs the key + Playwright installed globally + `pnpm exec playwright install chromium`)
 ```
+
+Playwright itself must be installed **globally** (`npm i -g playwright` or
+`pnpm add -g playwright`) before `pnpm test:web:e2e` will run. Then install the
+Chromium browser with `pnpm exec playwright install chromium`.
 
 CI (`.github/workflows/deploy.yml`) runs **lint + typecheck + coverage** on every push,
 then deploys `main` to Vercel.
