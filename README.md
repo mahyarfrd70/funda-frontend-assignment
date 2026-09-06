@@ -13,8 +13,7 @@ ESLint / Prettier / Husky · deployed to Vercel as a container.
 ---
 
 ## Issues faced & decisions made
-
-### Security — keep the API key off the client
+#### Security — keep the API key off the client
 
 The brief ships an API key, and it must not appear in the browser **or** in the repo. So
 the pages never call Funda directly: two thin **Nitro API routes** (`server/api/listings*`)
@@ -34,6 +33,13 @@ the cropped-off edges are exactly what the user needs to see. This felt like a r
 problem, so I switched the main gallery image from **`object-cover` to `object-contain`**:
 every image is now shown in full, letterboxed against a neutral background, with a fixed
 frame height so there's no layout shift.
+
+#### Before Fix
+<img width="1106" height="935" alt="Screenshot 2026-09-06 at 13 11 09" src="https://github.com/user-attachments/assets/ab2a9a1f-d121-4412-9ce4-b1747aab2527" />
+
+#### After Fix
+<img width="1058" height="896" alt="Screenshot 2026-09-06 at 13 11 37" src="https://github.com/user-attachments/assets/10c90f3b-7134-4d6a-8f85-0d1e279d8f29" />
+
 
 ### Performance — the gallery downloaded full-size images on load
 
