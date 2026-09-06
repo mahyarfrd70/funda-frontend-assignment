@@ -8,7 +8,6 @@ const status = computed(() =>
     ? { label: 'Verkocht', tone: 'danger' as const }
     : { label: 'Beschikbaar', tone: 'success' as const },
 )
-
 </script>
 
 <template>

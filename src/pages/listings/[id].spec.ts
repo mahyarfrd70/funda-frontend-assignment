@@ -97,9 +97,7 @@ describe('listing detail page', () => {
     await render()
     await flushPromises()
 
-    expect(
-      screen.getByRole('application', { name: /van Goghstraat 5/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('application', { name: /van Goghstraat 5/i })).toBeInTheDocument()
   })
 
   it('surfaces an upstream 404 as a fatal error instead of rendering the page', async () => {

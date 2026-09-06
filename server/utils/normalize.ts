@@ -1,4 +1,9 @@
-import type { FeatureGroup, ListingDetail, ListingPhoto, ListingSummary } from '#shared/types/listing'
+import type {
+  FeatureGroup,
+  ListingDetail,
+  ListingPhoto,
+  ListingSummary,
+} from '#shared/types/listing'
 
 export interface RawListing {
   Id: string
