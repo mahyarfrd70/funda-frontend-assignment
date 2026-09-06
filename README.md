@@ -236,7 +236,7 @@ values, `http://` image URLs, `"1963"` strings for numbers — into the clean
   (needs a headless UI lib — Reka UI).
 - **Playwright E2E** for the page flows (list → detail → gallery → map); right now the
   `e2e` project only covers the API.
-- Tests for `layouts/default.vue` and the page components; a custom `error.vue`.
+- Tests for the page components; a custom `error.vue`.
 - Search / filters / pagination — deliberately left out to keep the scope tight.
 
 ---
