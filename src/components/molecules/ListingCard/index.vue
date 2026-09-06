@@ -1,15 +1,7 @@
 <script setup lang="ts">
-// Vue composition APIs are imported explicitly (not via Nuxt auto-import),
-// so this renders identically in Storybook — which has no auto-import.
 import { computed } from 'vue'
 import type { ListingSummary } from '#shared/types/listing'
 
-/**
- * Molecule: one listing in the results grid. Pure presentation — takes a
- * normalized `ListingSummary` and renders it. It deliberately doesn't link
- * anywhere: the page wraps it in a `<NuxtLink>`, since route awareness is
- * an organism/page concern, not a molecule's.
- */
 const { listing } = defineProps<{ listing: ListingSummary }>()
 
 const features = computed(() => {

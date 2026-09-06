@@ -4,8 +4,6 @@ import { screen } from '@testing-library/vue'
 import { flushPromises } from '@vue/test-utils'
 import PropertyMap from './index.vue'
 
-// Leaflet needs a real browser layout — stub it so we can assert the wiring
-// (map created, centred on the right coordinates) without one.
 const setView = vi.fn().mockReturnThis()
 
 vi.mock('leaflet', () => ({

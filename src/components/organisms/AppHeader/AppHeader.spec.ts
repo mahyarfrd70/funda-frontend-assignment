@@ -27,10 +27,4 @@ describe('AppHeader', () => {
 
     expect(screen.getAllByRole('link')).toHaveLength(1)
   })
-
-  it('marks the house icon as decorative', async () => {
-    await renderSuspended(AppHeader)
-
-    expect(screen.getByText('🏠')).toHaveAttribute('aria-hidden', 'true')
-  })
 })

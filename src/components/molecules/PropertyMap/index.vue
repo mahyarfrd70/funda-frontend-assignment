@@ -1,17 +1,9 @@
 <script setup lang="ts">
+// client-only — Leaflet needs the DOM, so it's imported dynamically in onMounted
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import type { Map as LeafletMap } from 'leaflet'
 import type { Coordinates } from '#shared/types/listing'
 
-/**
- * Molecule: the property location on an OpenStreetMap (Leaflet) map, with
- * zoom controls, scroll-wheel zoom, and pinch zoom — all Leaflet defaults.
- *
- * Client-only by construction: Leaflet touches `window`/`document`, so it's
- * imported dynamically inside `onMounted` and never runs during SSR. The
- * detail page wraps this in `<ClientOnly>` with a same-height fallback so
- * there's no layout shift when the map appears.
- */
 const { coordinates, label } = defineProps<{
   coordinates: Coordinates | null
   label: string
@@ -27,10 +19,7 @@ onMounted(async () => {
   const L = (await import('leaflet')).default
   await import('leaflet/dist/leaflet.css')
 
-  // The component can unmount (fast client-side nav, Storybook teardown)
-  // while those dynamic imports resolve — Vue nulls the template ref, and
-  // `L.map(null)` throws "Map container not found".
-  if (destroyed || !container.value) return
+  if (destroyed || !container.value) return // unmounted while the imports resolved
 
   map = L.map(container.value).setView([coordinates.lat, coordinates.lng], 15)
 

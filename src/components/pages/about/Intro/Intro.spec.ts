@@ -15,8 +15,6 @@ describe('AboutIntro', () => {
   it('renders the auto-imported atoms (badge + button) correctly', async () => {
     await renderSuspended(AboutIntro)
 
-    // Proves AtomsBadge/AtomsButton — Nuxt auto-imports — resolve inside a
-    // component that never explicitly imports them, same as in the real app.
     expect(screen.getByText('Page component')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /back home/i })).toHaveAttribute('href', '/')
   })

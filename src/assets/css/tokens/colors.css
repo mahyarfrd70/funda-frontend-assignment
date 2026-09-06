@@ -1,10 +1,4 @@
-/**
- * Color tokens. Each `--color-*` entry auto-generates the full set of
- * Tailwind utilities for it: `bg-*`, `text-*`, `border-*`, `ring-*`, etc.
- * There is nothing else to configure — no tailwind.config.js color object.
- */
 @theme {
-  /* ---- Brand — warm terracotta/orange, the app's single accent color ---- */
   --color-brand-50: oklch(97% 0.02 55);
   --color-brand-100: oklch(93% 0.05 53);
   --color-brand-200: oklch(87% 0.09 50);
@@ -16,9 +10,6 @@
   --color-brand-800: oklch(38% 0.14 28);
   --color-brand-900: oklch(30% 0.11 27);
 
-  /* ---- Semantic surfaces & text — the only colors most components should
-     reach for; they alias Tailwind's built-in neutral scale so we don't
-     maintain a second gray ramp by hand ---- */
   --color-surface: oklch(99% 0 0);
   --color-surface-muted: var(--color-neutral-50);
   --color-border: var(--color-neutral-200);
@@ -26,8 +17,6 @@
   --color-foreground-muted: var(--color-neutral-500);
   --color-on-brand: var(--color-neutral-50);
 
-  /* ---- Status colors — aliased to Tailwind's default palette rather than
-     hand-rolled ramps ---- */
   --color-success: var(--color-emerald-600);
   --color-warning: var(--color-amber-500);
   --color-danger: var(--color-red-600);

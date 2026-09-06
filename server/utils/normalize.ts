@@ -1,15 +1,5 @@
 import type { FeatureGroup, ListingDetail, ListingSummary } from '#shared/types/listing'
 
-/**
- * Raw → clean. Partial shapes of the Funda feed below cover only the
- * fields we actually read; everything else in the (large, messy) payload
- * is intentionally ignored. Auto-imported by Nitro.
- */
-
-// ---------------------------------------------------------------------------
-// Partial raw shapes
-// ---------------------------------------------------------------------------
-
 export interface RawListing {
   Id: string
   Adres: string
@@ -47,8 +37,7 @@ interface RawFeatureGroup {
 }
 
 export interface RawDetail {
-  // NB: on the detail response `Id` is a numeric GlobalId — the UUID that
-  // matches the listings feed (and the detail URL) is `InternalId`.
+  // on the detail response `Id` is a numeric GlobalId; the UUID is `InternalId`
   InternalId: string
   Adres: string
   Postcode: string
@@ -75,18 +64,12 @@ export interface RawDetail {
   Kenmerken?: RawFeatureGroup[]
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 const euro = new Intl.NumberFormat('nl-NL')
 
-/** Funda serves image URLs as http://; force https to avoid mixed content. */
 function toHttps(url: string | undefined | null): string | null {
   return url ? url.replace(/^http:\/\//i, 'https://') : null
 }
 
-/** Swap the Funda CDN size suffix, e.g. `_klein.jpg` → `_groot.jpg`. */
 function resize(url: string, size: 'middel' | 'groot'): string {
   return url.replace(/_(klein|middel|groot|grotere)\.jpg$/i, `_${size}.jpg`)
 }
@@ -95,7 +78,7 @@ function priceLabel(price: number | null): string {
   return price == null ? 'Prijs op aanvraag' : `€ ${euro.format(price)} k.k.`
 }
 
-/** WGS84_X is longitude, WGS84_Y is latitude. */
+// WGS84_X is longitude, WGS84_Y is latitude
 function coordinates(lng: number, lat: number): { lat: number; lng: number } | null {
   return lng && lat ? { lat, lng } : null
 }
@@ -109,10 +92,6 @@ function stripHtml(value: string): string {
     .replace(/\s+/g, ' ')
     .trim()
 }
-
-// ---------------------------------------------------------------------------
-// Mappers
-// ---------------------------------------------------------------------------
 
 function toSummary(raw: RawListing): ListingSummary {
   const koopprijs = raw.Koopprijs ?? null

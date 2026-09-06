@@ -1,14 +1,4 @@
 <script setup lang="ts">
-/**
- * Atom: base button. Every visual variant is built from design tokens
- * (brand color, radius, spacing) defined in assets/css/main.css — no
- * one-off colors here, so changing the tokens re-themes every button.
- *
- * Sizes default to `md` (2.75rem / 44px tall), the minimum comfortable
- * touch-target size on mobile — this is a mobile-first app, so the default
- * has to work well with a thumb before it needs to work well with a mouse.
- */
-
 type Variant = 'primary' | 'secondary' | 'ghost'
 type Size = 'sm' | 'md' | 'lg'
 

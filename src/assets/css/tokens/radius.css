@@ -1,7 +1,3 @@
-/**
- * Radius tokens — slightly rounder than Tailwind's defaults for a
- * friendlier, card-heavy UI.
- */
 @theme {
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;

@@ -1,13 +1,6 @@
 <script setup lang="ts">
-// Explicit import (not Nuxt auto-import) so this renders the same in Storybook.
 import { ref } from 'vue'
 
-/**
- * Molecule: a main photo + a thumbnail strip, click/arrows to switch. Pure
- * presentation with local `current` state — no routing, no data. The main
- * image loads eagerly with high priority (it's the LCP element on the
- * detail page); thumbnails stay lazy.
- */
 const { photos, alt } = defineProps<{ photos: string[]; alt: string }>()
 
 const current = ref(0)

@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import type { FeatureGroup } from '#shared/types/listing'
 
-/**
- * Molecule: renders Funda's grouped "Kenmerken" as plain titled
- * definition lists. Pure presentation. (An accordion would be a nice
- * refinement once a headless UI lib is in — see README.)
- */
 defineProps<{ groups: FeatureGroup[] }>()
 </script>
 

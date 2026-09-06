@@ -1,12 +1,5 @@
 <script setup lang="ts">
-/**
- * Listing detail. Data is fetched server-side via the Nitro proxy
- * (`/api/listings/:id`) — the Funda key never reaches the browser, and the
- * SSR HTML already contains the facts, description and (LCP) main photo.
- *
- * A sold/removed listing comes back as a 404 from the route; we re-throw it
- * as a fatal error so Nuxt renders the error page with the right status.
- */
+// fetched via the Nitro proxy so the Funda key stays server-side
 const route = useRoute()
 const id = String(route.params.id)
 

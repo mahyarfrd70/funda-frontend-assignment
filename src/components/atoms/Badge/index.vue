@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * Atom: small status/label pill — e.g. "Nieuw", "360°", energy label,
- * sold/available state. Same token-driven approach as Button.vue.
- */
-
 type Tone = 'brand' | 'neutral' | 'success' | 'warning' | 'danger' | 'info'
 
 const { tone = 'neutral' } = defineProps<{

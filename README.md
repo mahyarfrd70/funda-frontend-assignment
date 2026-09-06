@@ -1,450 +1,246 @@
-# Funda Frontend Assignment
+# Funda — Frontend Assignment
 
-Search + listing-detail mini-app built against Funda's Partner API, as a take-home
-assignment. Stack: **Nuxt 4 · Vue 3 · TypeScript · Tailwind · Reka UI**.
+A two-page property app built against Funda's Partner API: a **listing results** page and
+a **listing detail** page with a photo gallery, key facts, and an interactive map.
 
-> Status: work in progress, built step by step. This README grows with the project;
-> sections for testing/deployment will fill in as those pieces land.
+**Live:** https://funda-frontend-assignment-m4d3s7su2-mahyarfrds-projects.vercel.app/
 
-## Prerequisites
+Mobile-first, server-rendered, and the Funda API key never reaches the browser.
 
-- Node 22 or 24 LTS
-- pnpm (`corepack enable` or `brew install pnpm`)
+---
 
-## Setup
+## Stack
+
+| Area                   | Choice                                                     | Notes                                                                                        |
+| ---------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Framework              | **Nuxt 4** (Vue 3.5, Nitro)                                | SSR + a small server layer, file-based routing                                               |
+| Language               | **TypeScript**, `strict`                                   | plus `noUncheckedIndexedAccess`                                                              |
+| Styling                | **Tailwind CSS v4**                                        | CSS-first — design tokens live in `@theme`, no `tailwind.config.js`                          |
+| Component workshop     | **Storybook 10** (`@storybook/vue3-vite`)                  | a11y + interaction addons; every story also runs as a browser test                           |
+| Unit / component tests | **Vitest 4** + `@nuxt/test-utils` + `@testing-library/vue` | components render in a real (headless) Nuxt context                                          |
+| Map                    | **Leaflet** + OpenStreetMap tiles                          | no API key, no signup                                                                        |
+| Lint / format          | **ESLint** (`@nuxt/eslint`, flat config) + **Prettier**    | `prettier-plugin-tailwindcss` sorts classes                                                  |
+| Git hooks              | **Husky**                                                  | `pre-commit` = lint + typecheck + test, `pre-push` = 75% coverage gate                       |
+| Hosting                | **Vercel** (runs the app as a Docker container)            | CI in `.github/workflows/deploy.yml`; `@vercel/speed-insights` for real-user Core Web Vitals |
+
+Package manager: **pnpm**. Runtime: **Node 22 or 24 LTS**.
+
+---
+
+## Getting started
 
 ```bash
+# 1. install
 pnpm install
-cp .env.example .env   # already contains the assignment's temporary API key
+
+# 2. environment — the Funda Partner API key is read server-side only
+cp .env.example .env
+#   then set NUXT_FUNDA_API_KEY in .env to the temporary key from the assignment brief:
+#   NUXT_FUNDA_API_KEY=76666a29898f491480386d966b75f949
+
+# 3. run
+pnpm dev            # → http://localhost:3000
 ```
 
-## Development
+`pnpm install` runs `nuxt prepare` and wires up the Git hooks automatically — nothing else
+to set up.
+
+### Production build (optional)
 
 ```bash
-pnpm dev              # http://localhost:3000 (falls back to 3001+ if busy)
-pnpm lint             # eslint
-pnpm format           # prettier --write
-pnpm typecheck        # vue-tsc via `nuxt typecheck`
-pnpm storybook        # http://localhost:6006
-pnpm build-storybook  # static build → storybook-static/
-pnpm test             # unit tests (src/ + server/), once
-pnpm test:watch       # same, watch mode
-pnpm coverage         # unit tests + coverage report (75% gate)
-pnpm test:all         # unit + every story run as a Vitest browser test
-pnpm test:e2e         # spins up Nuxt, hits /api/* against the live Funda API (slow, network)
+pnpm build          # → .output/  (self-contained Nitro server)
+pnpm preview        # serve the production build locally
 ```
 
-## Storybook
+---
 
-Plain `@storybook/vue3-vite` (Storybook 10), **not** the `@nuxtjs/storybook` community
-module — that module's latest release pins `storybook: ~9.0.5`, a major version behind.
-Since atoms have no Nuxt-specific runtime dependency (no `useRoute`, no auto-imported
-composables — just props, slots, and Tailwind classes), plain Vue3+Vite Storybook is the
-correct fit; Nuxt-aware mocking (`<NuxtLink>` stubs, route mocks, etc.) can be added via
-decorators if a later story needs it, without adopting the whole module.
+## Commands
 
-- **Every component gets a `ComponentName.stories.ts`** next to its `index.vue`, e.g.
-  `components/atoms/Button/Button.stories.ts`.
-- **Tokens are shared, not duplicated**: `.storybook/preview.ts` imports the same
-  `assets/css/main.css` the app uses, and `.storybook/main.ts` registers the same
-  `@tailwindcss/vite` plugin — a component looks in Storybook exactly as it will in the
-  app, no separate theme to keep in sync.
-- **Bridging Nuxt's conveniences into Storybook** (Storybook's Vite build isn't Nuxt):
-  `main.ts`'s `viteFinal` re-adds the `#shared/*` and `~/*` aliases; `preview.ts`
-  `import.meta.glob`s the atoms and registers them globally, so a molecule's story can
-  use `<AtomsBadge>` the way the app does. The one thing not bridged is Vue's
-  auto-imported composition APIs — components `import { computed } from 'vue'`
-  explicitly (valid in Nuxt too), so they render the same in both. `pnpm test:storybook`
-  runs every story as a real browser test and would catch a regression here.
-- **Mobile-first by default**: `preview.ts` sets the initial viewport to a phone
-  (`iphone6`, 375px) — switch it from the toolbar to check `sm:`/`md:`/`lg:`.
-- **a11y addon** runs automatically on every story (panel shows violations; not yet
-  wired to fail CI — see `parameters.a11y.test` in `preview.ts`).
-- **`@storybook/addon-vitest`** lets every story double as a Vitest test
-  (`vitest.config.ts` already wires it up) — real component test coverage without a
-  separate Testing Library setup, covered further in a later testing step.
+| Command                                 | What it does                                                                       |
+| --------------------------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm dev`                              | dev server with HMR, http://localhost:3000                                         |
+| `pnpm build` / `pnpm preview`           | production build / serve it locally                                                |
+| `pnpm lint` / `pnpm lint:fix`           | ESLint                                                                             |
+| `pnpm format` / `pnpm format:check`     | Prettier                                                                           |
+| `pnpm typecheck`                        | `vue-tsc` over the whole project                                                   |
+| `pnpm storybook`                        | Storybook, http://localhost:6006                                                   |
+| `pnpm build-storybook`                  | static Storybook build                                                             |
+| `pnpm test`                             | unit tests (`src/` + `server/`), once                                              |
+| `pnpm test:watch`                       | unit tests in watch mode                                                           |
+| `pnpm test:storybook`                   | run every story as a browser test                                                  |
+| `pnpm test:all`                         | unit + storybook                                                                   |
+| `pnpm test:e2e`                         | spin up Nuxt and hit `/api/*` against the **live** Funda API (slow, needs network) |
+| `pnpm coverage`                         | unit tests + coverage report (fails under 75%)                                     |
+| `pnpm docker:build` / `pnpm docker:run` | build / run the container image                                                    |
 
-**Known gotcha (fixed, documented so it doesn't get "fixed" again by accident):** Vite 8
-made Rolldown its default production bundler. `@storybook/vue3-vite`'s static build
-(`storybook build`) failed with a raw `<script setup>` block reaching the JS/TS parser
-un-transformed — Rolldown's build path wasn't invoking the Vue SFC plugin already
-present transitively. Fixed by registering `@vitejs/plugin-vue` explicitly (and as a
-direct devDependency, since Node's ESM resolution from `.storybook/main.ts` needs it
-declared directly, not just transitively available) in `viteFinal`. `pnpm dev` was never
-affected — only the static build path. Confirmed fixed by actually running
-`pnpm build-storybook` and inspecting the compiled CSS for real token output, not just
-by the build exiting 0.
+---
 
 ## Testing
 
-**Every component gets a `ComponentName.spec.ts`** next to its `index.vue` — same
-per-component folder as its story, e.g. `components/atoms/Button/Button.spec.ts`.
+Three Vitest **projects** (`vitest.config.ts`):
 
-- **`@vue/test-utils` + `@testing-library/vue`**, via **`@nuxt/test-utils`**'s
-  `renderSuspended` — this runs the component inside a real (headless) Nuxt context, so
-  Nuxt auto-imports (`<AtomsBadge>`, `<AtomsButton>`, `<NuxtLink>`, composables) all
-  resolve exactly like they do in the app. No manual mocking/registration needed for
-  components that just consume other auto-imported components.
-- Queries follow Testing Library convention — `screen.getByRole(...)`,
-  `screen.getByText(...)` — asserting on what a user/assistive tech would perceive
-  (accessible name, role, visible text), not implementation details. Pairs naturally
-  with the a11y addon already running in Storybook.
-- `@testing-library/jest-dom` matchers (`toBeInTheDocument`, `toHaveAttribute`,
-  `toBeDisabled`, ...) are registered at runtime in `test/vitest-setup.ts`. The **types**
-  for those matchers come from a second, separate import in root-level
-  `testing-library.d.ts` — Nuxt's generated tsconfig only auto-includes root `*.d.ts`
-  files (and `test/nuxt/**`), not the `test/` folder itself, so the runtime setup file
-  alone isn't visible to `pnpm typecheck` / the editor's TS server. Two files, one
-  reason: confirmed by reading `.nuxt/tsconfig.app.json`'s actual `include` glob rather
-  than guessing why `toBeInTheDocument` was untyped.
-- Three Vitest **projects** (`vitest.config.ts`):
-  - **`unit`** — `*.spec.ts` under `src/` _and_ `server/`, fast, jsdom-like. `pnpm test`.
-  - **`storybook`** — every `*.stories.ts` run as a real browser test via Playwright.
-    `pnpm test:all` runs `unit` + `storybook`.
-  - **`e2e`** — spins up the real Nuxt server and hits `/api/*` against the **live Funda
-    API**. Opt-in (`pnpm test:e2e`), out of `pnpm test` and the hooks — it's slow and
-    needs network.
-- **Server logic is unit-tested where it's pure.** `server/utils/normalize.ts` (raw feed
-  → view models — https rewrite, price formatting, `_klein`→`_groot`, HTML stripping,
-  `Bouwjaar` string→number, ...) is fully covered by `normalize.spec.ts`.
-  `server/utils/funda.ts` was refactored to expose `buildFundaUrl` / `mapFundaError` /
-  `isListingId` as pure functions so they're testable without a server; the `fundaFetch`
-  wrapper (`useRuntimeConfig` + `$fetch` glue) and the route handlers themselves —
-  genuinely just composition — are covered by the `e2e` project and excluded from the
-  coverage gate (`coverage.exclude` lists `server/api/**` with the reasoning inline).
-- **The `e2e` project earned its keep immediately:** it caught that the detail response's
-  `Id` is a numeric `GlobalId`, not the UUID — the UUID is in `InternalId`. The
-  normalizer was reading the wrong field. Unit tests with a hand-written fixture wouldn't
-  have found it; hitting the real API did.
+- **`unit`** — `*.spec.ts` next to each component, and under `server/`. Components are
+  rendered with `@nuxt/test-utils`' `renderSuspended`, so Nuxt auto-imports, `<NuxtLink>`,
+  etc. resolve exactly as in the app. Queries follow Testing Library convention
+  (`getByRole`, `getByText`) — asserting on what a user or assistive tech perceives, not
+  on implementation details.
+- **`storybook`** — every `*.stories.ts` is executed as a real browser test (Playwright),
+  catching render/interaction regressions in each component variant.
+- **`e2e`** — boots the real Nuxt server and calls `/api/listings` and
+  `/api/listings/:id` end to end against the live Funda feed. Opt-in (`pnpm test:e2e`),
+  kept out of `pnpm test` and the hooks because it's slow and needs network.
 
-**A real dependency conflict, resolved by checking, not guessing:** the Storybook CLI's
-init pinned `vitest@5.0.0` (needed by `@vitest/coverage-v8@5.0.0`), but
-`@storybook/addon-vitest@10.6.0` declares `vitest: ^3.0.0 || ^4.0.0`, and
-`@nuxt/test-utils@4.2.0` declares `vitest: ^4.0.2` — both incompatible with 5.x. Caught
-this with `pnpm peers check` (not by hitting a runtime error later) and realigned the
-whole vitest family to the latest **4.x** line (`vitest@4.1.11` +
-`@vitest/coverage-v8@4.1.11` + `@vitest/browser-playwright@4.1.11`), which satisfies
-every one of those ranges at once — confirmed clean with `pnpm peers check` afterward.
+```bash
+pnpm test            # everyday: fast unit tests
+pnpm test:all        # unit + storybook (what CI runs)
+pnpm coverage        # + coverage, 75% gate on statements/branches/functions/lines
+pnpm test:e2e        # integration against the live API
+```
 
-**Coverage gotcha:** `@vitest/coverage-v8` didn't attribute lines to tested `.vue`
-files at all until `vitest.config.ts` declared an explicit
-`coverage.include: ['src/**/*.vue', 'src/**/*.ts']` — without it, the report silently
-only covered plain `.ts`/untested files. Verified by checking the report actually names
-the tested components (95% coverage across them) rather than trusting a report that
-merely printed a summary.
+Coverage is set to `all: true` — every file under `src/` and `server/` counts, not just
+the ones a test happens to import, so the 75% gate is meaningful. Route handlers
+(`server/api/**`) are excluded: they're pure glue (param check → fetch → normalise →
+return); the branching logic lives in `server/utils/*` and is unit-tested, and the
+composition is covered by the `e2e` project.
 
-**Documented, not yet done:** `layouts/default.vue` and the two page components
-(`pages/index.vue`, `pages/listings/[id].vue`) have no tests (pages are excluded from
-coverage; page-level behaviour is exercised via the `e2e` project + manual checks);
-full-browser Playwright E2E for the page flows (list → detail → gallery → map) — the
-current `e2e` project only covers the API routes.
-
-## Git hooks
-
-[Husky](https://typicode.github.io/husky/) enforces the same checks locally that would
-otherwise only be caught in CI — `pnpm install` wires them up automatically via the
-`prepare` script, nothing to run manually after cloning.
-
-- **`pre-commit`** — `pnpm lint && pnpm typecheck && pnpm test`. Fails (blocking the
-  commit) on the first failing step, since the hook script starts with `set -e`.
-- **`pre-push`** — `pnpm coverage`, which fails if statements/branches/functions/lines
-  drop below **75%**. The threshold is enforced by Vitest itself
-  (`vitest.config.ts` → `test.coverage.thresholds`), not a custom parsing script.
-  Coverage uses `all: true` — every file matched by `coverage.include` counts, even
-  ones no test happens to import — otherwise an untested file would simply be absent
-  from the report instead of dragging the score down, and the gate would be
-  decorative. Verified this is a real gate, not just a report: temporarily set
-  `thresholds.lines` to `100` and confirmed `pnpm coverage` actually exits non-zero
-  before reverting it.
-
-Both hooks were verified by invoking them directly (`sh .husky/pre-commit`) rather than
-via a real commit, and by confirming `git config core.hooksPath` actually points at
-`.husky/_` — proof Git will invoke them, not just that the scripts run in isolation.
+---
 
 ## Project structure
 
 ```
-src/                            # Nuxt's srcDir — all application code lives here
+src/
+  assets/css/
+    main.css                  # imports Tailwind + the token files
+    tokens/                   # the design system — one file per concern
+      colors.css  spacing.css  typography.css  radius.css  shadows.css
   components/
-    atoms/                      # Button, Badge, Input, Icon, Spinner...
-    molecules/                  # pure presentation, no routing/data — each with .spec + .stories
-      ListingCard/               #   one result in the grid
-      PhotoGallery/              #   main photo + thumbnail strip, local `current` state
-      KeyFacts/                  #   the facts grid on the detail page
-      FeatureGroups/             #   Funda's grouped "Kenmerken" as titled lists
-      PropertyMap/               #   Leaflet + OSM map, client-only (dynamic import in onMounted)
-    organisms/
-      AppHeader/index.vue        # self-contained, product-vocabulary sections —
-      AppFooter/index.vue        # know about routes, may fetch data
-    pages/
-      about/Intro/index.vue      # used by exactly one page, never shared
-  composables/                  # Vue composables (stateful/reactive logic) — the Vue
-                                # equivalent of React hooks. Auto-imported by Nuxt.
-  utils/                        # pure, framework-agnostic functions (formatting,
-                                # parsing, URL helpers). No Vue, no HTTP calls.
-  pages/                        # routes — thin, compose components/{atoms,molecules,...}/*
-    index.vue                   # listing results — useFetch('/api/listings'), SSR
-    listings/[id].vue           # listing detail — useFetch('/api/listings/:id'), SSR;
-                                # 404 (sold/removed) re-thrown as a fatal error
-  layouts/                      # Nuxt page layouts (<NuxtLayout>), e.g. default.vue
-  assets/css/                   # Tailwind entry + design tokens (tokens/*.css)
-  app.vue                       # root component — <NuxtLayout><NuxtPage /></NuxtLayout>
-server/                         # Nitro backend — separate runtime, not affected by srcDir
+    atoms/                    # Button, Badge
+    molecules/                # ListingCard, PhotoGallery, KeyFacts, FeatureGroups, PropertyMap
+    organisms/                # AppHeader, AppFooter
+    pages/                    # components used by exactly one page (about/Intro)
+  layouts/
+    default.vue               # header + <slot> + footer
+  pages/
+    index.vue                 # listing results  — useFetch('/api/listings')
+    listings/[id].vue         # listing detail   — useFetch('/api/listings/:id')
+  app.vue                     # <NuxtLayout><NuxtPage /></NuxtLayout>
+
+server/                       # Nitro — a separate runtime, not "app" code
   api/
-    listings.get.ts             # GET /api/listings   — proxies Funda's koop feed
-    listings/[id].get.ts        # GET /api/listings/:id — proxies Funda's detail endpoint
+    listings.get.ts           # GET /api/listings       → proxies Funda's koop feed
+    listings/[id].get.ts      # GET /api/listings/:id    → proxies Funda's detail endpoint
   utils/
-    funda.ts                    # the single place the API key is used (auto-imported)
-    normalize.ts                # raw Funda payload → clean view models (auto-imported)
+    funda.ts                  # the one place the API key is used + pure helpers
+    normalize.ts              # raw Funda payload → clean view models
+
 shared/
-  types/listing.ts              # the normalized types, imported by both server/ and pages
-public/                         # static files served as-is
+  types/listing.ts            # the normalized types — imported by server/ and pages
 ```
 
-**Atomic Design, four tiers, each with hard rules — not just a naming convention:**
+Each component lives in its own folder as `ComponentName/index.vue`, with its
+`*.spec.ts` and `*.stories.ts` alongside it.
 
-1. **`atoms/`** — the smallest useful piece; can't be broken down further without
-   losing meaning (Button, Input, Icon, Spinner). Imports nothing from any other
-   component tier — zero dependencies. No data fetching, no store access, no
-   `useRoute`. Everything in through props, everything out through emits. Must be
-   renderable with no context whatsoever.
-2. **`molecules/`** — a small group of atoms doing one job together (a form field:
-   label + input + error text; a search bar: input + button). May import atoms, may
-   **not** import organisms. Still no data layer. Presentation logic only — showing an
-   error state, formatting a display string.
-3. **`organisms/`** — a self-contained section of the interface that means something
-   in _this_ product (a site header, a listing grid, a checkout form) — named in
-   business vocabulary, not generic UI vocabulary. This is where the rules loosen and
-   the domain arrives: organisms **may** import molecules and atoms, **may** fetch
-   data, read stores, and know about routes. `AppHeader`/`AppFooter` live here, not in
-   `molecules/`, specifically _because_ they use `<NuxtLink>` — route awareness is an
-   organism-tier capability, not a molecule one.
-4. **`pages/`** — components that may use atoms, molecules, and organisms freely, but
-   are used by **exactly one page**. If a second page ever needs one, promote it out
-   of `pages/` into `molecules/` or `organisms/` (whichever tier its own rules match)
-   — the folder name is the enforcement mechanism: nothing outside that one page
-   should ever import from here.
+### Atomic Design — with rules, not just names
 
-All four are just subfolders of `components/`, so Nuxt's default recursive scan covers
-every tier with zero extra config.
+The component tiers each have hard constraints:
 
-**Why `pages/` components don't live physically inside the route folder `src/pages/`:**
-in Nuxt, _every_ `.vue` file under `src/pages/` becomes a route automatically,
-recursively, based on its file path — unlike Next.js, where only `page.tsx` is special
-and anything else can be freely colocated. So a component at `src/pages/about/Hero.vue`
-would silently register as the route `/about/hero`. `components/pages/` gets the same
-"only used by this one page" intent without that routing risk — and reads clearly next
-to the other three tiers.
+| Tier          | May import       | Data layer / routes?                     | In one sentence                                                                       |
+| ------------- | ---------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| **atoms**     | nothing          | ❌                                       | smallest useful piece — props in, emits out, renders with zero context                |
+| **molecules** | atoms            | ❌                                       | a small group of atoms doing one job; presentation logic only                         |
+| **organisms** | molecules, atoms | ✅ may fetch / read stores / know routes | a self-contained section named in product vocabulary                                  |
+| **pages**     | anything         | ✅                                       | used by **exactly one** page; the moment a second page needs it, it moves down a tier |
 
-**`utils/` vs `composables/`:** if it uses `ref`/`watch`/lifecycle hooks or returns
-reactive state, it's a composable. If it's a plain function with no Vue dependency
-(e.g. `formatPrice`, `parseDotNetDate`), it's a util. One rule, no ambiguity — and both
-directories are auto-imported by Nuxt, so there's never a manual `import` to write for
-either.
+Examples of the rules in action:
 
-**File convention — every component gets its own folder:** `Button.vue` lives at
-`atoms/Button/index.vue`, not `atoms/Button.vue`, with its story and spec alongside it
-(`Button.stories.ts`, `Button.spec.ts`). This gives each component a home for
-everything that belongs to it without cluttering the parent folder.
+- `ListingCard` is a **molecule** — it renders a `ListingSummary` and nothing else. It
+  does **not** link anywhere; the results page wraps it in `<NuxtLink>`, because route
+  awareness is an organism/page concern.
+- `AppHeader`/`AppFooter` are **organisms**, not molecules — a site header/footer is a
+  self-contained, product-vocabulary section of the interface (and `AppHeader` knows
+  about routes via `<NuxtLink>`).
+- `PropertyMap` is a **molecule**: it takes `coordinates` + `label` and draws a map. It's
+  client-only by construction (Leaflet is `import()`ed inside `onMounted`), which also
+  keeps it out of the listings-page bundle.
 
-**Component tag names — two different rules, by design (`nuxt.config.ts`):**
-`atoms/`, `molecules/`, `organisms/` are scanned from the shared `~/components` root, so
-the tier name stays as a prefix: `components/atoms/Button/index.vue` → `<AtomsButton>`,
-`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`. `pages/` is
-registered as its **own separate root** (`~/components/pages`, excluded from the first
-root via `ignore: ['pages/**']` so it isn't scanned twice) — that root's own name never
-becomes part of the tag, but the page-name folder underneath it still does:
-`components/pages/about/Intro/index.vue` → `<AboutIntro>`, not `<PagesAboutIntro>`.
-Deliberate: organisms/atoms/molecules read better with their tier visible at the call
-site, while a page component's tag reads more naturally as "which page" than "that it's
-a page component" (self-evident from `pages/about/` in the file tree either way).
+Nuxt names components by their folder path, so the tier is visible at the call site:
+`components/atoms/Button/index.vue` → `<AtomsButton>`,
+`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`. `components/pages/` is
+registered as its own root so a page component reads as `<AboutIntro>`, not
+`<PagesAboutIntro>` — the file tree already says it's a page component.
 
-**Gotcha with `index.vue` + dedup:** for a plain filename, Nuxt drops a folder-name
-prefix that the filename already repeats — `components/organisms/ListingCard.vue`
-would resolve to `<ListingCard>` if the folder were `listing/`. With `index.vue` there's
-no filename left to compare against, so that dedup never fires — every path segment
-concatenates in full, regardless of repetition. This bit us for real: the about page's
-component was first named `pageComponents/about/AboutIntro/index.vue`, which should have
-produced `<AboutIntro>` but instead silently became `<AboutAboutIntro>` and failed to
-resolve entirely (caught by actually booting the page, not by reasoning about it). Fixed
-by naming the component folder for its _role_, not by repeating an ancestor folder's
-name — `Intro`, not `AboutIntro`, since `pages/about/` already supplies that context.
+### Design system tokens
 
-## Server API
+`src/assets/css/tokens/*.css` is the single source of truth for the visual language.
+Tailwind v4 is CSS-first, so each token is a CSS custom property inside a `@theme` block,
+and Tailwind generates the matching utilities automatically — `--color-brand-600` gives
+`bg-brand-600`, `text-brand-600`, `ring-brand-600`, and so on. Components never use a raw
+hex or pixel value; they only reach for tokens.
 
-The Vue pages never call `partnerapi.funda.nl` directly. They can't: the Funda Partner
-API sends **no CORS headers** (verified by calling it), so a browser request is blocked
-outright — and the API key must not reach the browser anyway. Two thin Nitro routes sit
-in between:
-
-| Route                   | Proxies                                 | Returns            |
-| ----------------------- | --------------------------------------- | ------------------ |
-| `GET /api/listings`     | Funda "Listings for Sale" (`type=koop`) | `ListingSummary[]` |
-| `GET /api/listings/:id` | Funda "Listing Details"                 | `ListingDetail`    |
-
-The feed returns ~15 listings for a bare `type=koop` query — no pagination, kept
-deliberately simple. (Pagination / infinite scroll would be a documented "further
-improvement".)
-
-A page calls `useFetch('/api/listings')` — its **own** origin. During SSR that invokes
-the handler directly (no network hop); on client-side navigation the browser hits
-`/api/listings` same-origin (no CORS), and the route attaches the key server-side. The
-key lives in exactly one file, `server/utils/funda.ts`, read from `runtimeConfig` —
-never in a route handler's own code, never in the client bundle.
-
-**Raw → clean:** the feed is Dutch-keyed, dates arrive as `"/Date(...)/"` strings,
-feature values contain HTML fragments, and image URLs are `http://`. `server/utils/
-normalize.ts` maps all of that into the `#shared/types/listing` view models before it
-leaves the server — the client never sees a raw Funda shape. Notable transforms:
-`http://` → `https://` on every image (mixed-content would break them on an https
-deploy), CDN size-suffix swaps (`_klein` → `_middel`/`_groot`), price → `"€ 700.000
-k.k."`, `WGS84_X/Y` → `{ lat, lng }`, HTML stripped from `Kenmerken` values.
-
-**Error mapping:** upstream 404 → 404 (a sold/removed listing — the detail page can show
-"no longer available"); a non-UUID `:id` is rejected as 404 before any upstream call
-(Funda answers those with a `200` + XML error page, not a 404); rate limit → 429;
-anything else upstream → 502. Verified each path against the live API.
-
-**Tested:** `normalize.ts` fully via unit tests; `funda.ts`'s pure helpers via unit
-tests; the routes end-to-end against the live API via the `e2e` Vitest project (see
-Testing). **Not done yet:** no caching (Funda rate-limits hard —
-`defineCachedEventHandler` with a short TTL + SWR is the next change, kept separate so
-its own behaviour gets verified).
-
-## Pages
-
-Both pages `await useFetch('/api/…')` — SSR-rendered, the Funda key never in the browser,
-the LCP image (`fetchpriority="high"`) already in the initial HTML.
-
-- **`/` — listing results.** Grid of `<NuxtLink><MoleculesListingCard></NuxtLink>`.
-  Loading skeleton, error + retry, empty state.
-- **`/listings/[id]` — listing detail.** Photo gallery, key-facts grid, description,
-  grouped features, and the location map. A sold/removed listing (upstream 404) is
-  re-thrown as a fatal `createError` so Nuxt serves a real 404, not a 200 with an empty
-  page.
-
-**The map** is Leaflet + OpenStreetMap tiles — no API key, no signup. Zoom in/out
-(buttons, scroll wheel, pinch) are Leaflet defaults. It's client-only by construction:
-Leaflet touches `window`, so it's `import()`ed inside `onMounted` (which also keeps it
-out of the listings-page bundle — verified), and the page wraps it in `<ClientOnly>` with
-a same-height fallback so the map appearing causes no layout shift. An unmount guard
-after the dynamic import stops `L.map(null)` throwing on fast navigation — a real bug the
-Storybook browser test caught.
-
-**Documented, not done:** a fullscreen lightbox for the gallery; an accordion for the
-feature groups (needs a headless UI lib); a sticky mobile price/CTA bar; the Core Web
-Vitals work from the analysis (eager LCP image on the grid, `preconnect` to the image
-CDN, response caching).
-
-## Design tokens
-
-`assets/css/tokens/*.css` is the single source of truth for the design system — one file
-per concern (`colors.css`, `spacing.css`, `typography.css`, `radius.css`, `shadows.css`),
-all imported by `assets/css/main.css`. Tailwind v4 is CSS-first, so there's no
-`tailwind.config.js` object to keep in sync: every `--color-*` / `--spacing-*` custom
-property inside a file's `@theme` block becomes matching utility classes automatically
-(`--color-brand-600` → `bg-brand-600`, `text-brand-600`, `ring-brand-600`, ...) —
-components should never reach for a raw hex/px value, only these tokens. Highlights:
-
-- **`colors.css`** — a custom 50–900 `brand-*` orange ramp (the app's one accent);
-  semantic surfaces (`surface`, `border`, `foreground`, `foreground-muted`, `on-brand`)
-  aliasing Tailwind's built-in neutral scale so components reach for meaning
-  ("foreground") rather than a raw shade ("neutral-900"); status colors (`success` /
-  `warning` / `danger` / `info`) aliased to Tailwind's existing emerald/amber/red/blue.
-- **`spacing.css`** — `gutter` (mobile page-edge padding) and `section` (vertical
-  rhythm) as semantic spacing tokens, used as `px-gutter`, `py-section`, etc.
-- **`typography.css`** — base type scale is Tailwind's default (already systemic);
-  this file only adds app-specific sizes, e.g. `text-price` for listing prices.
-- **`radius.css`** — `card` alias for the rounded corners used on every card/panel.
+- **`colors.css`** — a custom `brand-*` ramp (50–900, the one accent colour); **semantic**
+  surfaces (`surface`, `border`, `foreground`, `foreground-muted`, `on-brand`) that alias
+  Tailwind's neutral scale so components ask for meaning, not a shade; status colours
+  (`success` / `warning` / `danger` / `info`) aliased to Tailwind's built-in palette.
+- **`spacing.css`** — `gutter` (mobile page-edge padding) and `section` (vertical rhythm),
+  used as `px-gutter`, `py-section`.
+- **`typography.css`** — base scale is Tailwind's default; adds `text-price` for the price.
+- **`radius.css`** — `card` alias for the rounded corners used everywhere.
 - **`shadows.css`** — `card` / `popover` elevation.
 
-**Mobile-first convention:** every class list is written unprefixed (mobile) first;
-`sm:`/`md:`/`lg:` are added only where a larger viewport needs to look different — see
-`components/organisms/AppHeader/index.vue` or `pages/index.vue` for the pattern in
-practice.
+The same `main.css` is loaded by Storybook, so components look identical in both places.
 
-## Deployment
+**Mobile-first:** every class list is written unprefixed (the phone layout) first;
+`sm:` / `md:` / `lg:` are added only where a wider viewport needs to differ.
 
-**Chosen path: Vercel, running the Docker image directly** — Vercel added first-class
-support for this in June 2026 ([Container Images](https://vercel.com/docs/functions/container-images)):
-a `Dockerfile.vercel` (or `Containerfile.vercel`) at the repo root is auto-detected and
-run as a container-backed Vercel Function on Fluid compute, instead of Vercel's normal
-framework build pipeline. This is a different mechanism from a plain `Dockerfile` — see
-below for why there are two.
+### The server / API layer
 
-`.github/workflows/deploy.yml` runs on every push/PR (`quality`: lint, typecheck,
-coverage — the same three gates as the local pre-commit/pre-push hooks, so a bypassed
-local hook still can't reach production) and, only on a push to `main`, deploys via the
-Vercel CLI:
+The pages never call `partnerapi.funda.nl` directly — they can't, and shouldn't:
 
-```bash
-vercel deploy --prod --yes \
-  --env NUXT_FUNDA_API_KEY="$NUXT_FUNDA_API_KEY" \
-  --env NUXT_FUNDA_API_BASE="https://partnerapi.funda.nl/feeds/Aanbod.svc/json"
-```
+1. The Funda Partner API sends **no CORS headers**, so a browser request is blocked.
+2. The API key must not reach the browser.
 
-**Required GitHub repo secrets** (Settings → Secrets and variables → Actions):
+So two thin Nitro routes sit in between. A page calls `useFetch('/api/listings')` — its
+own origin. During SSR that invokes the handler directly; on client-side navigation the
+browser hits `/api/listings` same-origin (no CORS), and the route attaches the key
+server-side (it lives in `runtimeConfig`, never `runtimeConfig.public`).
 
-| Secret                               | Where to get it                                                                                                                                   |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VERCEL_TOKEN`                       | Vercel dashboard → Account Settings → Tokens → Create                                                                                             |
-| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | Run `vercel link` locally once — writes `.vercel/project.json` with both (gitignored; CI doesn't need the file, just these two values as secrets) |
-| `NUXT_FUNDA_API_KEY`                 | The assignment's API key (or a real one later)                                                                                                    |
+`server/utils/normalize.ts` turns Funda's raw feed — Dutch keys, HTML fragments in
+values, `http://` image URLs, `"1963"` strings for numbers — into the clean
+`#shared/types/listing` view models. Nothing raw crosses the server boundary.
 
-**How the key stays out of the repo and out of the browser:**
+---
 
-- _Repo:_ `--env` reads `${{ secrets.NUXT_FUNDA_API_KEY }}` at deploy time only — GitHub
-  Actions redacts the value from all logs automatically, and it's never written to a
-  file that gets committed. `.env` itself stays local-only (gitignored) and is never
-  read by CI at all.
-- _Browser:_ this was already true before Docker/Vercel entered the picture — the key
-  lives in `runtimeConfig.fundaApiKey` (`nuxt.config.ts`), not `runtimeConfig.public`,
-  so Nuxt never serializes it into the client bundle or hydration payload. Deployment
-  mechanism doesn't change this; it's a property of how the app reads the key.
+## Notes & decisions
 
-**Two Dockerfiles, two different jobs:**
+- **Plain `@storybook/vue3-vite`, not `@nuxtjs/storybook`** — the community module pins
+  Storybook a major version behind. Nuxt's aliases and global atom registration are
+  bridged into Storybook's Vite config manually instead.
+- **Vue composition APIs are imported explicitly** (`import { computed } from 'vue'`) —
+  valid in Nuxt, and it means components render the same in Storybook, which has no
+  auto-import.
+- **The `e2e` test paid for itself on the first run:** it caught that the detail
+  response's `Id` is a numeric `GlobalId`; the UUID is in `InternalId`. The normaliser
+  was reading the wrong field — a hand-written unit fixture would have hidden it.
+- **Vitest is pinned to 4.x** — `@storybook/addon-vitest` and `@nuxt/test-utils` both
+  need `^4`, while the Storybook CLI had installed `vitest@5`.
 
-- **`Dockerfile.vercel`** — required filename for Vercel's container-Function path
-  above; leaves `PORT` unset so Vercel can inject its own (default 80) rather than
-  fighting a hardcoded one.
-- **`Dockerfile`** — generic, for any platform that runs a container image directly
-  (Fly.io, Railway, Render, Cloud Run, a VPS) — fixes `PORT=3000` since there, we're the
-  ones deciding it. Not used by the Vercel path, kept for that alternative.
+---
 
-```bash
-pnpm docker:build   # docker build -t funda-frontend-assignment .
-pnpm docker:run     # docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment
-# or, equivalently:
-docker compose up --build
-```
+## What I'd do with more time
 
-**Three stages, final image ships only `.output/`:**
+- **Caching** on the server routes (`defineCachedEventHandler`, short TTL + SWR) — Funda
+  rate-limits aggressively.
+- **Core Web Vitals**: eager + `fetchpriority="high"` on the first grid image,
+  `preconnect` to the image CDN, `@nuxt/image` for responsive/modern-format images.
+- A **fullscreen lightbox** for the gallery and an **accordion** for the feature groups
+  (needs a headless UI lib — Reka UI).
+- **Playwright E2E** for the page flows (list → detail → gallery → map); right now the
+  `e2e` project only covers the API.
+- Tests for `layouts/default.vue` and the page components; a custom `error.vue`.
+- Search / filters / pagination — deliberately left out to keep the scope tight.
 
-1. `deps` — `pnpm install --frozen-lockfile`, cached independently of source changes
-   (`--ignore-scripts`, since `nuxt.config.ts` isn't in this stage yet for the
-   `postinstall: nuxt prepare` hook to run against).
-2. `build` — full source copied in, `pnpm build` produces `.output/`.
-3. `runtime` — copies **only** `.output/` into a fresh `node:24-alpine`. No pnpm, no
-   source, no dev dependencies in the final image.
+---
 
-That last point isn't an assumption — verified directly by running `pnpm build`,
-inspecting the result, and running the server standalone before writing the Dockerfile
-around it: Nitro's `node-server` preset (Nuxt's default) copies every runtime dependency
-it needs into `.output/server/node_modules` itself. The whole `.output/` folder for this
-app is ~2.7 MB, and `node .output/server/index.mjs` runs correctly with nothing else
-present, respecting `PORT`/`HOST` env vars (confirmed by actually starting it on a
-non-default port and curling it).
+## Time spent
 
-**What's genuinely unverified:** this environment has neither Docker/Podman/Colima nor a
-Vercel account connected, so none of `docker build`, `docker run`, or an actual
-`vercel deploy` have been executed — only the Node-level behavior both Dockerfiles
-depend on has been (see above), plus reading Vercel's current official docs directly
-(fetched, not recalled from training data, since this container-Functions feature
-shipped after that cutoff) for the `Dockerfile.vercel` filename requirement, the `--env`
-flag's runtime-injection behavior, and the `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` env-var
-convention. Once the three `VERCEL_*` secrets are set, push to `main` and check the
-Action run and the deployment URL; report back anything that doesn't match.
-
-**Secrets:** `.env` is never copied into the image (`.dockerignore` excludes it) — pass
-`NUXT_FUNDA_API_KEY`/`NUXT_FUNDA_API_BASE` at `docker run`/`docker compose` time via
-`--env-file` (as the scripts above do) or your host's own secret/env mechanism.
+_<!-- fill in --> — spread over a few evenings._

@@ -1,16 +1,9 @@
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
-// Relative (not `#shared/*`) — the "e2e" Vitest project runs in a plain node
-// environment without the Nuxt aliases.
+// relative, not `#shared/*` — the "e2e" project has no Nuxt aliases
 import type { ListingDetail, ListingSummary } from '../../shared/types/listing'
 
-/**
- * End-to-end: spins up the real Nuxt server and exercises the Nitro routes
- * against the live Funda Partner API. Opt-in via `pnpm test:e2e` — it's slow
- * and needs network. Proves the route composition (param check → fundaFetch
- * → normalize) works as a whole, not just the unit-tested pieces.
- */
 describe('server API (e2e)', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('../..', import.meta.url)),

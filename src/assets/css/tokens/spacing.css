@@ -1,10 +1,4 @@
-/**
- * Spacing tokens. Tailwind's numeric scale (p-4, gap-2, ...) already covers
- * most spacing needs — these are semantic aliases for the handful of values
- * that define the page's mobile-first rhythm, used as `px-gutter`,
- * `py-section`, etc.
- */
 @theme {
-  --spacing-gutter: 1rem; /* page-edge padding on mobile; widen with sm:/lg: at the call site */
-  --spacing-section: 2rem; /* vertical gap between major sections on mobile */
+  --spacing-gutter: 1rem;
+  --spacing-section: 2rem;
 }

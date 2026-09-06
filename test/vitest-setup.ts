@@ -1,3 +1,2 @@
-// Extends Vitest's `expect` with jest-dom matchers (toBeInTheDocument,
-// toHaveTextContent, etc.) for every test in the "unit" project.
+// jest-dom matchers (toBeInTheDocument, toHaveAttribute, ...) for every unit test
 import '@testing-library/jest-dom/vitest'

@@ -1,12 +1,5 @@
 <script setup lang="ts">
-/**
- * Listing results — the app's home page.
- *
- * Data is fetched with `useFetch('/api/listings')` (the Nitro proxy — the
- * Funda key never reaches the browser). On the first load this runs during
- * SSR, so the HTML already contains the full list; on a later client-side
- * visit it fetches from our own origin (no CORS, still no key exposure).
- */
+// fetched via the Nitro proxy so the Funda key stays server-side
 const { data: listings, status, error, refresh } = await useFetch('/api/listings')
 
 useSeoMeta({
@@ -27,7 +20,6 @@ useSeoMeta({
       >
     </div>
 
-    <!-- Only ever seen on a client-side refetch — SSR delivers data with the HTML. -->
     <ul
       v-else-if="status === 'pending'"
       class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"

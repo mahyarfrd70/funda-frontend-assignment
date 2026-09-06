@@ -27,7 +27,6 @@ const meta: Meta<typeof ListingCard> = {
   component: ListingCard,
   tags: ['autodocs'],
   args: { listing: sample },
-  // Constrain the width so it reads like one cell of the results grid.
   decorators: [() => ({ template: '<div style="max-width: 22rem"><story /></div>' })],
 }
 export default meta

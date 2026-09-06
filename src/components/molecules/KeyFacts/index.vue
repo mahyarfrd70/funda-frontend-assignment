@@ -2,11 +2,6 @@
 import { computed } from 'vue'
 import type { ListingDetail } from '#shared/types/listing'
 
-/**
- * Molecule: the key facts grid on the detail page. Pure presentation —
- * takes a normalized ListingDetail, shows the facts it actually has
- * (skips missing/zero values rather than rendering "0 m²" or "—").
- */
 const { listing } = defineProps<{ listing: ListingDetail }>()
 
 const facts = computed(() => {

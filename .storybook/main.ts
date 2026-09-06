@@ -11,11 +11,7 @@ const config: StorybookConfig = {
   ],
   framework: '@storybook/vue3-vite',
 
-  // Reuse the app's own Tailwind pipeline so component previews are styled
-  // with the same design tokens as the real app — no separate Storybook
-  // theme to keep in sync. Also mirror the Nuxt path aliases stories rely
-  // on (`#shared/*`, `~/*`) — Storybook's Vite build doesn't get them for
-  // free.
+  // give Storybook's Vite build what Nuxt provides: Tailwind + path aliases
   async viteFinal(config) {
     const { default: tailwindcss } = await import('@tailwindcss/vite')
     const { default: vue } = await import('@vitejs/plugin-vue')

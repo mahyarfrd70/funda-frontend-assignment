@@ -1,24 +1,10 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens live in tokens/*.css, one file per concern (color, spacing,
- * typography, radius, shadow) — this is the design system's single source
- * of truth. Tailwind v4 is CSS-first: each `@theme` block below (spread
- * across the imported files) auto-generates matching utility classes, so
- * there's no tailwind.config.js to keep in sync. Change a value in one of
- * these files and every component using that token updates with it.
- */
 @import './tokens/colors.css';
 @import './tokens/spacing.css';
 @import './tokens/typography.css';
 @import './tokens/radius.css';
 @import './tokens/shadows.css';
-
-/*
- * z-index scale (documented, not tokenized): Tailwind's built-in z-10/20/30/
- * 40/50 utilities are enough for this app's few stacking contexts —
- * z-40 sticky header, z-30 sticky mobile price bar, z-50 gallery lightbox.
- */
 
 @layer base {
   html {
