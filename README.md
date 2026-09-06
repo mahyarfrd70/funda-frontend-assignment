@@ -162,6 +162,8 @@ then deploys `main` to Vercel.
 - **Playwright in CI.** The e2e suite is opt-in today because it needs the API key and
   hits the live feed. I'd wire it into the workflow behind the existing secret, plus a
   mocked-API variant so it can also run without the feed.
+- **Swipe and keyboard gallery navigation.** On mobile, swipe left/right to move through photos; on desktop, use the arrow keys. The gallery already has next/prev controls — gesture and keyboard would make that feel native without changing the data model.
+- **Medium images on mobile.** The gallery currently requests the large (`_groot`) photo. Serving `_middel` on small viewports would cut payload size and improve mobile load time, keeping `_groot` for desktop.
 
 ---
 
