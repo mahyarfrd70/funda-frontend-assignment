@@ -19,12 +19,8 @@ export default defineNuxtConfig({
     typeCheck: false,
   },
 
-  // '~/components/pages' is registered as its own root so the tier drops from
-  // the tag name: pages/about/Intro → <AboutIntro>, not <PagesAboutIntro>
-  components: [
-    { path: '~/components', pathPrefix: true, ignore: ['pages/**'] },
-    '~/components/pages',
-  ],
+  // pathPrefix keeps the tier in the tag name: atoms/Button → <AtomsButton>
+  components: [{ path: '~/components', pathPrefix: true }],
 
   runtimeConfig: {
     fundaApiKey: '',

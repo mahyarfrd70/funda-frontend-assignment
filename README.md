@@ -36,7 +36,7 @@ pnpm install
 # 2. environment — the Funda Partner API key is read server-side only
 cp .env.example .env
 #   then set NUXT_FUNDA_API_KEY in .env to the temporary key from the assignment brief:
-#   NUXT_FUNDA_API_KEY=76666a29898f491480386d966b75f949
+#   NUXT_FUNDA_API_KEY=<NUXT_FUNDA_API_KEY>
 
 # 3. run
 pnpm dev            # → http://localhost:3000
@@ -119,7 +119,6 @@ src/
     atoms/                    # Button, Badge
     molecules/                # ListingCard, PhotoGallery, KeyFacts, FeatureGroups, PropertyMap
     organisms/                # AppHeader, AppFooter
-    pages/                    # components used by exactly one page (about/Intro)
   layouts/
     default.vue               # header + <slot> + footer
   pages/
@@ -146,12 +145,15 @@ Each component lives in its own folder as `ComponentName/index.vue`, with its
 
 The component tiers each have hard constraints:
 
-| Tier          | May import       | Data layer / routes?                     | In one sentence                                                                       |
-| ------------- | ---------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| **atoms**     | nothing          | ❌                                       | smallest useful piece — props in, emits out, renders with zero context                |
-| **molecules** | atoms            | ❌                                       | a small group of atoms doing one job; presentation logic only                         |
-| **organisms** | molecules, atoms | ✅ may fetch / read stores / know routes | a self-contained section named in product vocabulary                                  |
-| **pages**     | anything         | ✅                                       | used by **exactly one** page; the moment a second page needs it, it moves down a tier |
+| Tier          | May import       | Data layer / routes?                     | In one sentence                                                       |
+| ------------- | ---------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| **atoms**     | nothing          | ❌                                       | smallest useful piece — props in, emits out, renders with zero context |
+| **molecules** | atoms            | ❌                                       | a small group of atoms doing one job; presentation logic only        |
+| **organisms** | molecules, atoms | ✅ may fetch / read stores / know routes | a self-contained section named in product vocabulary                 |
+
+Page-level composition (fetching, wiring the tiers together) lives in the route files
+themselves — `src/pages/index.vue` and `src/pages/listings/[id].vue`. A `components/pages/`
+tier for single-page components can be added the moment one is genuinely reused.
 
 Examples of the rules in action:
 
@@ -165,11 +167,10 @@ Examples of the rules in action:
   client-only by construction (Leaflet is `import()`ed inside `onMounted`), which also
   keeps it out of the listings-page bundle.
 
-Nuxt names components by their folder path, so the tier is visible at the call site:
+Nuxt names components by their folder path (`components: [{ path: '~/components',
+pathPrefix: true }]`), so the tier is visible at the call site:
 `components/atoms/Button/index.vue` → `<AtomsButton>`,
-`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`. `components/pages/` is
-registered as its own root so a page component reads as `<AboutIntro>`, not
-`<PagesAboutIntro>` — the file tree already says it's a page component.
+`components/organisms/AppHeader/index.vue` → `<OrganismsAppHeader>`.
 
 ### Design system tokens
 
@@ -179,14 +180,15 @@ and Tailwind generates the matching utilities automatically — `--color-brand-6
 `bg-brand-600`, `text-brand-600`, `ring-brand-600`, and so on. Components never use a raw
 hex or pixel value; they only reach for tokens.
 
-- **`colors.css`** — a custom `brand-*` ramp (50–900, the one accent colour); **semantic**
-  surfaces (`surface`, `border`, `foreground`, `foreground-muted`, `on-brand`) that alias
-  Tailwind's neutral scale so components ask for meaning, not a shade; status colours
-  (`success` / `warning` / `danger` / `info`) aliased to Tailwind's built-in palette.
+- **`colors.css`** — a custom `brand-*` ramp for the one accent colour (only the steps in
+  actual use); **semantic** surfaces (`surface`, `surface-muted`, `border`, `foreground`,
+  `foreground-muted`, `on-brand`) that alias Tailwind's neutral scale so components ask for
+  meaning, not a shade; status colours (`success` / `warning` / `danger` / `info`) aliased
+  to Tailwind's built-in palette.
 - **`spacing.css`** — `gutter` (mobile page-edge padding) and `section` (vertical rhythm),
   used as `px-gutter`, `py-section`.
 - **`typography.css`** — base scale is Tailwind's default; adds `text-price` for the price.
-- **`radius.css`** — `card` alias for the rounded corners used everywhere.
+- **`radius.css`** — `md` for controls, `card` for the rounded corners used everywhere else.
 - **`shadows.css`** — `card` / `popover` elevation.
 
 The same `main.css` is loaded by Storybook, so components look identical in both places.
