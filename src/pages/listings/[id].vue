@@ -6,7 +6,8 @@ const { data: listing, error } = await useFetch(
   () => `/api/listings/${route.params.id}`,
 )
 
-if (error.value) {
+watchEffect(() => {
+  if (!error.value) return
   throw createError({
     statusCode: error.value.statusCode ?? 500,
     statusMessage:
@@ -15,7 +16,7 @@ if (error.value) {
         : 'De woning kon niet worden geladen',
     fatal: true,
   })
-}
+})
 
 useSeoMeta({
   title: () => (listing.value ? `${listing.value.address}, ${listing.value.city}` : 'Woning'),
