@@ -167,4 +167,4 @@ then deploys `main` to Vercel.
 
 ## Time spent
 
-_~<!-- fill in --> hours, spread over a few evenings._
+I spent about 8 hours on it (1 working day)

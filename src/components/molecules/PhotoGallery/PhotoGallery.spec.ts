@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { renderSuspended } from '@nuxt/test-utils/runtime'
 import { fireEvent, screen } from '@testing-library/vue'
 import type { ListingPhoto } from '#shared/types/listing'
@@ -38,6 +38,21 @@ describe('PhotoGallery', () => {
       'src',
       photos[1]!.full,
     )
+  })
+
+  it('scrolls the active thumbnail into view when navigating', async () => {
+    const scrollIntoView = vi
+      .spyOn(HTMLElement.prototype, 'scrollIntoView')
+      .mockImplementation(() => {})
+
+    await renderSuspended(PhotoGallery, { props: { photos, alt: 'x' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Volgende foto' }))
+
+    expect(scrollIntoView).toHaveBeenCalledWith(
+      expect.objectContaining({ inline: 'nearest', block: 'nearest' }),
+    )
+
+    scrollIntoView.mockRestore()
   })
 
   it('jumps to a photo via its thumbnail', async () => {

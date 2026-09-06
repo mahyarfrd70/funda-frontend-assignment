@@ -56,6 +56,14 @@ test.describe('listing detail page', () => {
     await expect(counter).toHaveText(`2 / ${total}`)
     await page.getByRole('button', { name: 'Volgende foto' }).click()
     await expect(counter).toHaveText(`3 / ${total}`)
+
+    // stepping forward with the arrow keeps the matching thumbnail in view
+    const steps = Math.min(total - 3, 6)
+    for (let i = 0; i < steps; i++) {
+      await page.getByRole('button', { name: 'Volgende foto' }).click()
+    }
+    await expect(counter).toHaveText(`${3 + steps} / ${total}`)
+    await expect(page.locator('[aria-current="true"]')).toBeInViewport()
   })
 
   test('the back link returns to the results page', async ({ page }) => {

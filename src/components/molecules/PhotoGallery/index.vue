@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { ListingPhoto } from '#shared/types/listing'
 
 const { photos, alt } = defineProps<{ photos: ListingPhoto[]; alt: string }>()
 
 const current = ref(0)
+const thumbStrip = ref<HTMLUListElement | null>(null)
 
 // the big image loads `_groot`; only the photo on screen is in the DOM, so the
 // large file for a given photo is fetched the moment it's opened, not before.
@@ -15,6 +16,16 @@ function step(delta: number) {
   const next = current.value + delta
   if (next >= 0 && next < photos.length) current.value = next
 }
+
+// keep the active thumbnail visible when navigating with the arrows
+watch(
+  current,
+  (index) => {
+    const thumb = thumbStrip.value?.children[index] as HTMLElement | undefined
+    thumb?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  },
+  { flush: 'post' },
+)
 </script>
 
 <template>
@@ -56,7 +67,7 @@ function step(delta: number) {
       </span>
     </div>
 
-    <ul v-if="photos.length > 1" class="flex gap-2 overflow-x-auto pb-1">
+    <ul v-if="photos.length > 1" ref="thumbStrip" class="flex gap-2 overflow-x-auto pb-1">
       <li v-for="(photo, index) in photos" :key="photo.thumb">
         <button
           type="button"
