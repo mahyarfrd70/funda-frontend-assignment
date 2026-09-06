@@ -11,7 +11,7 @@ const dirname = import.meta.dirname
 
 // projects: "unit" (*.spec.ts), "storybook" (stories as browser tests),
 // "api" (real server → live Funda API, opt-in). Full browser e2e lives in
-// playwright.config.ts / e2e/, run with `pnpm test:e2e`.
+// playwright.config.ts / e2e/web, run with `pnpm test:web:e2e`.
 export default defineConfig(async () => ({
   test: {
     coverage: {
