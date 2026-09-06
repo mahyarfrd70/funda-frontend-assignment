@@ -8,6 +8,10 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
+    // Leaflet is only pulled in via a dynamic import inside the map component;
+    // pre-bundling it keeps Vite from re-optimising (and hard-reloading) the
+    // first time a visitor opens a listing detail page in dev
+    optimizeDeps: { include: ['leaflet'] },
   },
 
   srcDir: 'src',

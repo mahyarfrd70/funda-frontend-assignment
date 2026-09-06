@@ -10,7 +10,8 @@ import { playwright } from '@vitest/browser-playwright'
 const dirname = import.meta.dirname
 
 // projects: "unit" (*.spec.ts), "storybook" (stories as browser tests),
-// "e2e" (real server → live API, opt-in)
+// "api" (real server → live Funda API, opt-in). Full browser e2e lives in
+// playwright.config.ts / e2e/, run with `pnpm test:e2e`.
 export default defineConfig(async () => ({
   test: {
     coverage: {
@@ -21,7 +22,7 @@ export default defineConfig(async () => ({
         'src/**/*.spec.ts',
         'src/app.vue',
         'server/**/*.spec.ts',
-        'server/api/**', // pure glue — logic is in server/utils, composition in the e2e project
+        'server/api/**', // pure glue — logic is in server/utils, composition is covered end to end
       ],
       all: true,
       thresholds: {
@@ -49,14 +50,14 @@ export default defineConfig(async () => ({
         test: {
           name: 'unit',
           include: ['src/**/*.spec.ts', 'server/**/*.spec.ts'],
-          setupFiles: ['./test/vitest-setup.ts'],
+          setupFiles: ['./vitest-setup.ts'],
         },
       }),
       {
         extends: true,
         test: {
-          name: 'e2e',
-          include: ['test/e2e/**/*.spec.ts'],
+          name: 'api',
+          include: ['e2e/api/**/*.spec.ts'],
           environment: 'node',
           testTimeout: 120_000,
           hookTimeout: 120_000,

@@ -18,6 +18,7 @@ Mobile-first, server-rendered, and the Funda API key never reaches the browser.
 | Styling                | **Tailwind CSS v4**                                        | CSS-first — design tokens live in `@theme`, no `tailwind.config.js`                          |
 | Component workshop     | **Storybook 10** (`@storybook/vue3-vite`)                  | a11y + interaction addons; every story also runs as a browser test                           |
 | Unit / component tests | **Vitest 4** + `@nuxt/test-utils` + `@testing-library/vue` | components render in a real (headless) Nuxt context                                          |
+| End-to-end tests       | **Playwright**                                             | a real browser (desktop + mobile) against a dev server + the live Funda API                  |
 | Map                    | **Leaflet** + OpenStreetMap tiles                          | no API key, no signup                                                                        |
 | Lint / format          | **ESLint** (`@nuxt/eslint`, flat config) + **Prettier**    | `prettier-plugin-tailwindcss` sorts classes                                                  |
 | Git hooks              | **Husky**                                                  | `pre-commit` = lint + typecheck + test, `pre-push` = 75% coverage gate                       |
@@ -69,15 +70,16 @@ pnpm preview        # serve the production build locally
 | `pnpm test:watch`                       | unit tests in watch mode                                                           |
 | `pnpm test:storybook`                   | run every story as a browser test                                                  |
 | `pnpm test:all`                         | unit + storybook                                                                   |
-| `pnpm test:e2e`                         | spin up Nuxt and hit `/api/*` against the **live** Funda API (slow, needs network) |
 | `pnpm coverage`                         | unit tests + coverage report (fails under 75%)                                     |
+| `pnpm test:api`                         | boot Nuxt and hit `/api/*` against the **live** Funda API (contract check)         |
+| `pnpm test:e2e` / `pnpm test:e2e:ui`    | Playwright — real browser through both pages against the live API                  |
 | `pnpm docker:build` / `pnpm docker:run` | build / run the container image                                                    |
 
 ---
 
 ## Testing
 
-Three Vitest **projects** (`vitest.config.ts`):
+Three Vitest **projects** (`vitest.config.ts`) plus a Playwright suite:
 
 - **`unit`** — `*.spec.ts` next to each component, next to each page, and under `server/`.
   Components and pages are rendered with `@nuxt/test-utils`' `renderSuspended`, so Nuxt
@@ -91,15 +93,21 @@ Three Vitest **projects** (`vitest.config.ts`):
   reusable design-system tiers (atoms / molecules / organisms); the one-off
   `components/pages/*` components are verified through the page integration tests and their
   own `*.spec.ts` instead.
-- **`e2e`** — boots the real Nuxt server and calls `/api/listings` and
-  `/api/listings/:id` end to end against the live Funda feed. Opt-in (`pnpm test:e2e`),
-  kept out of `pnpm test` and the hooks because it's slow and needs network.
+- **`api`** — boots the real Nuxt server and calls `/api/listings` and `/api/listings/:id`
+  against the live Funda feed, asserting the response contract (no key leaked, no raw
+  shapes, `http://` rewritten, `{ thumb, full }` photos). Opt-in — slow, needs the key.
+- **`e2e/`** ([Playwright](playwright.config.ts)) — a real browser drives both pages
+  end to end against a `pnpm dev` server and the live API: SSR'd cards in the initial
+  HTML, click through to a detail page, gallery next/prev + thumbnail, the Leaflet map
+  loading OSM tiles, the back link, a 404. Runs on a desktop **and** a mobile viewport.
+  Opt-in — needs `NUXT_FUNDA_API_KEY` in `.env` and `pnpm exec playwright install chromium`.
 
 ```bash
 pnpm test            # everyday: fast unit tests
 pnpm test:all        # unit + storybook (what CI runs)
 pnpm coverage        # + coverage, 75% gate on statements/branches/functions/lines
-pnpm test:e2e        # integration against the live API
+pnpm test:api        # API contract, live Funda API
+pnpm test:e2e        # Playwright, real browser + live API  (--ui for the runner)
 ```
 
 Coverage is set to `all: true` — every file under `src/` and `server/` counts, not just
@@ -252,8 +260,8 @@ and a `_groot` is fetched when its photo is opened.
   `preconnect` to the image CDN, `@nuxt/image` for responsive/modern-format images.
 - A **fullscreen lightbox** for the gallery and an **accordion** for the feature groups
   (needs a headless UI lib — Reka UI).
-- **Playwright E2E** for the page flows (list → detail → gallery → map); right now the
-  `e2e` project only covers the API.
+- Put the Playwright suite in CI (behind the API-key secret) and add a mocked-API
+  variant so the page flows can be tested without the live feed.
 - A custom `error.vue` for the 404 / upstream-failure states.
 - Search / filters / pagination — deliberately left out to keep the scope tight.
 

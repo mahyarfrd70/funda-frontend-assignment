@@ -1,10 +1,10 @@
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
-// relative, not `#shared/*` — the "e2e" project has no Nuxt aliases
+// relative, not `#shared/*` — the "api" project has no Nuxt aliases
 import type { ListingDetail, ListingSummary } from '../../shared/types/listing'
 
-describe('server API (e2e)', async () => {
+describe('server API contract', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('../..', import.meta.url)),
     dev: true,

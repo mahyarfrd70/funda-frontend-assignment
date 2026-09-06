@@ -23,7 +23,9 @@
     "prepare": "husky",
     "docker:build": "docker build -f Dockerfile.vercel -t funda-frontend-assignment .",
     "docker:run": "docker run --rm -p 3000:3000 --env-file .env funda-frontend-assignment",
-    "test:e2e": "vitest run --project e2e"
+    "test:api:e2e": "vitest run --project api",
+    "test:web:e2e": "playwright test",
+    "test:web:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -39,6 +41,7 @@
     "@chromatic-com/storybook": "5.3.1",
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "4.2.0",
+    "@playwright/test": "1.63.0",
     "@storybook/addon-a11y": "10.6.0",
     "@storybook/addon-docs": "^10.6.0",
     "@storybook/addon-vitest": "^10.6.0",
