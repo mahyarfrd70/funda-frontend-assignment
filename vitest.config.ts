@@ -19,7 +19,6 @@ export default defineConfig(async () => ({
       exclude: [
         'src/**/*.stories.ts',
         'src/**/*.spec.ts',
-        'src/pages/**',
         'src/app.vue',
         'server/**/*.spec.ts',
         'server/api/**', // pure glue — logic is in server/utils, composition in the e2e project

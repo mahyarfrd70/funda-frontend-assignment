@@ -79,11 +79,13 @@ pnpm preview        # serve the production build locally
 
 Three Vitest **projects** (`vitest.config.ts`):
 
-- **`unit`** — `*.spec.ts` next to each component, and under `server/`. Components are
-  rendered with `@nuxt/test-utils`' `renderSuspended`, so Nuxt auto-imports, `<NuxtLink>`,
-  etc. resolve exactly as in the app. Queries follow Testing Library convention
-  (`getByRole`, `getByText`) — asserting on what a user or assistive tech perceives, not
-  on implementation details.
+- **`unit`** — `*.spec.ts` next to each component, next to each page, and under `server/`.
+  Components and pages are rendered with `@nuxt/test-utils`' `renderSuspended`, so Nuxt
+  auto-imports, `<NuxtLink>`, etc. resolve exactly as in the app. The page specs are
+  integration tests: the Nitro endpoints are mocked with `registerEndpoint`, and they
+  assert the happy path plus the empty / error / 404 states end to end. Queries follow
+  Testing Library convention (`getByRole`, `getByText`) — asserting on what a user or
+  assistive tech perceives, not on implementation details.
 - **`storybook`** — every `*.stories.ts` is executed as a real browser test (Playwright),
   catching render/interaction regressions in each component variant.
 - **`e2e`** — boots the real Nuxt server and calls `/api/listings` and
@@ -236,7 +238,7 @@ values, `http://` image URLs, `"1963"` strings for numbers — into the clean
   (needs a headless UI lib — Reka UI).
 - **Playwright E2E** for the page flows (list → detail → gallery → map); right now the
   `e2e` project only covers the API.
-- Tests for the page components; a custom `error.vue`.
+- A custom `error.vue` for the 404 / upstream-failure states.
 - Search / filters / pagination — deliberately left out to keep the scope tight.
 
 ---
