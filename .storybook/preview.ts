@@ -10,6 +10,7 @@ const atoms = import.meta.glob<{ default: Component }>('../src/components/atoms/
   eager: true,
 })
 setup((app) => {
+  document.documentElement.lang = 'nl'
   for (const [path, mod] of Object.entries(atoms)) {
     const name = /atoms\/([^/]+)\/index\.vue$/.exec(path)?.[1]
     if (name) app.component(`Atoms${name}`, mod.default)

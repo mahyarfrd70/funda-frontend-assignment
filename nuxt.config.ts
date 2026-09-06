@@ -16,6 +16,13 @@ export default defineNuxtConfig({
 
   srcDir: 'src',
 
+  // UI copy is Dutch; without this, screen readers assume English.
+  app: {
+    head: {
+      htmlAttrs: { lang: 'nl' },
+    },
+  },
+
   modules: ['@nuxt/eslint', '@vercel/speed-insights'],
 
   typescript: {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildFundaUrl, isListingId, mapFundaError } from './funda'
 
 const BASE = 'https://partnerapi.funda.nl/feeds/Aanbod.svc/json'
-const KEY = '76666a29898f491480386d966b75f949'
+const KEY = 'test-key'
 
 describe('isListingId', () => {
   it('accepts a UUID', () => {

@@ -11,6 +11,12 @@ describe('default layout', () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 
+  it('sets the document language to Dutch', async () => {
+    await renderSuspended(DefaultLayout)
+
+    expect(document.documentElement).toHaveAttribute('lang', 'nl')
+  })
+
   it('renders page content in the main region', async () => {
     await renderSuspended(DefaultLayout, {
       slots: { default: () => 'Page content' },

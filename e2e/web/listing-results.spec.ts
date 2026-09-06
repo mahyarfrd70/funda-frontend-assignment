@@ -25,6 +25,7 @@ test.describe('listing results page', () => {
     const html = await (await request.get('/')).text()
 
     expect(html).toContain('Huizen te koop')
+    expect(html).toMatch(/<html[^>]*\blang="nl"/)
     expect(html).toMatch(/\d+ woningen/)
     // a fully formed card, present before any client-side hydration
     expect(html).toContain('<article')

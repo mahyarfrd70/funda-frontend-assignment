@@ -12,6 +12,7 @@ defineProps<{ listings: ListingSummary[] }>()
         <NuxtLink
           :to="`/listings/${listing.id}`"
           class="block rounded-card focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+          :prefetch="false"
         >
           <MoleculesListingCard :listing="listing" />
         </NuxtLink>
