@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import type { ListingPhoto } from '#shared/types/listing'
 
-const { photos, alt } = defineProps<{ photos: string[]; alt: string }>()
+const { photos, alt } = defineProps<{ photos: ListingPhoto[]; alt: string }>()
 
 const current = ref(0)
+
+// the big image loads `_groot`; only the photo on screen is in the DOM, so the
+// large file for a given photo is fetched the moment it's opened, not before.
+// `current` is always a valid index here — the template guards on photos.length
+const selectedImage = computed(() => photos[current.value]!)
 
 function step(delta: number) {
   const next = current.value + delta
@@ -15,8 +21,8 @@ function step(delta: number) {
   <div v-if="photos.length" class="flex flex-col gap-3">
     <div class="relative aspect-[3/2] overflow-hidden rounded-card bg-surface-muted">
       <img
-        :key="photos[current]"
-        :src="photos[current]"
+        :key="selectedImage.full"
+        :src="selectedImage.full"
         :alt="`${alt} — foto ${current + 1} van ${photos.length}`"
         width="900"
         height="600"
@@ -51,7 +57,7 @@ function step(delta: number) {
     </div>
 
     <ul v-if="photos.length > 1" class="flex gap-2 overflow-x-auto pb-1">
-      <li v-for="(photo, index) in photos" :key="photo">
+      <li v-for="(photo, index) in photos" :key="photo.thumb">
         <button
           type="button"
           :aria-label="`Naar foto ${index + 1}`"
@@ -61,7 +67,7 @@ function step(delta: number) {
           @click="current = index"
         >
           <img
-            :src="photo"
+            :src="photo.thumb"
             alt=""
             width="80"
             height="64"

@@ -1,11 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
+import type { ListingPhoto } from '#shared/types/listing'
 import PhotoGallery from './index.vue'
 
-const photos = [
-  'https://cloud.funda.nl/valentina_media/227/572/214_groot.jpg',
-  'https://cloud.funda.nl/valentina_media/227/572/200_groot.jpg',
-  'https://cloud.funda.nl/valentina_media/227/572/201_groot.jpg',
-]
+const shot = (n: string): ListingPhoto => ({
+  thumb: `https://cloud.funda.nl/valentina_media/227/572/${n}_klein.jpg`,
+  full: `https://cloud.funda.nl/valentina_media/227/572/${n}_groot.jpg`,
+})
+
+const photos = [shot('214'), shot('200'), shot('201')]
 
 const meta: Meta<typeof PhotoGallery> = {
   title: 'Molecules/PhotoGallery',

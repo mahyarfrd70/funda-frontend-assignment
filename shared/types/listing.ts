@@ -31,12 +31,19 @@ export interface FeatureGroup {
   items: { label: string; value: string }[]
 }
 
+export interface ListingPhoto {
+  /** small image (`_klein`) — used for the gallery thumbnail strip */
+  thumb: string
+  /** large image (`_groot`) — only requested once the photo is opened */
+  full: string
+}
+
 export interface ListingDetail extends ListingSummary {
   description: string
   yearBuilt: number | null
   bedrooms: number | null
   bathrooms: number | null
   energyLabel: string | null
-  photos: string[]
+  photos: ListingPhoto[]
   features: FeatureGroup[]
 }

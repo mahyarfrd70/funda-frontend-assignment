@@ -87,14 +87,14 @@ describe('normalizeListings', () => {
     })
   })
 
-  it('rewrites http:// image URLs to https and prefers the medium size', () => {
+  it('rewrites http:// image URLs to https and serves the grid the medium size', () => {
     const summary = normalizeListings({ Objects: [rawListing] })[0]!
     expect(summary.thumbnail).toBe('https://cloud.funda.nl/valentina_media/227/572/214_middel.jpg')
   })
 
-  it('falls back to Foto, then null, when there is no medium photo', () => {
+  it('resizes the fallback photo to medium too, and is null when there is none', () => {
     const withFoto = normalizeListings({ Objects: [{ ...rawListing, FotoMedium: undefined }] })[0]!
-    expect(withFoto.thumbnail).toBe('https://cloud.funda.nl/valentina_media/227/572/214_klein.jpg')
+    expect(withFoto.thumbnail).toBe('https://cloud.funda.nl/valentina_media/227/572/214_middel.jpg')
 
     const noPhoto = normalizeListings({
       Objects: [{ ...rawListing, FotoMedium: undefined, Foto: undefined }],
@@ -175,11 +175,17 @@ describe('normalizeListingDetail', () => {
     expect(normalizeListingDetail({ ...rawDetail, Energielabel: undefined }).energyLabel).toBeNull()
   })
 
-  it('rewrites photos to https and bumps them to the large size', () => {
+  it('rewrites photos to https and exposes both a small and a large size', () => {
     const { photos } = normalizeListingDetail(rawDetail)
     expect(photos).toEqual([
-      'https://cloud.funda.nl/valentina_media/227/572/214_groot.jpg',
-      'https://cloud.funda.nl/valentina_media/227/572/200_groot.jpg',
+      {
+        thumb: 'https://cloud.funda.nl/valentina_media/227/572/214_klein.jpg',
+        full: 'https://cloud.funda.nl/valentina_media/227/572/214_groot.jpg',
+      },
+      {
+        thumb: 'https://cloud.funda.nl/valentina_media/227/572/200_klein.jpg',
+        full: 'https://cloud.funda.nl/valentina_media/227/572/200_groot.jpg',
+      },
     ])
   })
 

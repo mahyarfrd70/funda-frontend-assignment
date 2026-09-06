@@ -35,6 +35,13 @@ describe('server API (e2e)', async () => {
     expect(detail.id).toBe(listings[0].id)
     expect(Array.isArray(detail.photos)).toBe(true)
     expect(Array.isArray(detail.features)).toBe(true)
+
+    if (detail.photos.length) {
+      expect(detail.photos[0]).toEqual({
+        thumb: expect.stringMatching(/_klein\.jpg$/),
+        full: expect.stringMatching(/_groot\.jpg$/),
+      })
+    }
   })
 
   it('GET /api/listings/:id rejects a non-UUID id with 404', async () => {

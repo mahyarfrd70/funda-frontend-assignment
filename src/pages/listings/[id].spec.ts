@@ -51,7 +51,10 @@ const detail = (over: Partial<ListingDetail> = {}): ListingDetail => ({
   bedrooms: 3,
   bathrooms: 1,
   energyLabel: 'C',
-  photos: ['https://cloud.funda.nl/a_groot.jpg', 'https://cloud.funda.nl/b_groot.jpg'],
+  photos: [
+    { thumb: 'https://cloud.funda.nl/a_klein.jpg', full: 'https://cloud.funda.nl/a_groot.jpg' },
+    { thumb: 'https://cloud.funda.nl/b_klein.jpg', full: 'https://cloud.funda.nl/b_groot.jpg' },
+  ],
   features: [
     { title: 'Overdracht', items: [{ label: 'Vraagprijs', value: '€ 700.000 kosten koper' }] },
   ],

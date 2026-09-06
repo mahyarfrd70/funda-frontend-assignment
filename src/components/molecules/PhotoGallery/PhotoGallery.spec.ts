@@ -1,29 +1,43 @@
 import { describe, expect, it } from 'vitest'
 import { renderSuspended } from '@nuxt/test-utils/runtime'
 import { fireEvent, screen } from '@testing-library/vue'
+import type { ListingPhoto } from '#shared/types/listing'
 import PhotoGallery from './index.vue'
 
-const photos = [
-  'https://cloud.funda.nl/a.jpg',
-  'https://cloud.funda.nl/b.jpg',
-  'https://cloud.funda.nl/c.jpg',
+const photos: ListingPhoto[] = [
+  { thumb: 'https://cloud.funda.nl/a_klein.jpg', full: 'https://cloud.funda.nl/a_groot.jpg' },
+  { thumb: 'https://cloud.funda.nl/b_klein.jpg', full: 'https://cloud.funda.nl/b_groot.jpg' },
+  { thumb: 'https://cloud.funda.nl/c_klein.jpg', full: 'https://cloud.funda.nl/c_groot.jpg' },
 ]
 
 describe('PhotoGallery', () => {
-  it('shows the first photo with a counter', async () => {
+  it('shows the first photo at full size with a counter', async () => {
     await renderSuspended(PhotoGallery, { props: { photos, alt: 'van Goghstraat 5' } })
 
-    expect(screen.getByRole('img', { name: /foto 1 van 3/i })).toHaveAttribute('src', photos[0])
+    expect(screen.getByRole('img', { name: /foto 1 van 3/i })).toHaveAttribute(
+      'src',
+      photos[0]!.full,
+    )
     expect(screen.getByText('1 / 3')).toBeInTheDocument()
   })
 
-  it('advances to the next photo with the next button', async () => {
+  it('uses the small images for the thumbnail strip', async () => {
+    const { container } = await renderSuspended(PhotoGallery, { props: { photos, alt: 'x' } })
+
+    const thumbs = [...container.querySelectorAll('li img')].map((img) => img.getAttribute('src'))
+    expect(thumbs).toEqual([photos[0]!.thumb, photos[1]!.thumb, photos[2]!.thumb])
+  })
+
+  it('advances to the next photo — and its large image — with the next button', async () => {
     await renderSuspended(PhotoGallery, { props: { photos, alt: 'x' } })
 
     await fireEvent.click(screen.getByRole('button', { name: 'Volgende foto' }))
 
     expect(screen.getByText('2 / 3')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /foto 2 van 3/i })).toHaveAttribute('src', photos[1])
+    expect(screen.getByRole('img', { name: /foto 2 van 3/i })).toHaveAttribute(
+      'src',
+      photos[1]!.full,
+    )
   })
 
   it('jumps to a photo via its thumbnail', async () => {
@@ -32,6 +46,10 @@ describe('PhotoGallery', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Naar foto 3' }))
 
     expect(screen.getByText('3 / 3')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /foto 3 van 3/i })).toHaveAttribute(
+      'src',
+      photos[2]!.full,
+    )
   })
 
   it('hides prev on the first photo and next on the last', async () => {

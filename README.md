@@ -221,6 +221,11 @@ server-side (it lives in `runtimeConfig`, never `runtimeConfig.public`).
 values, `http://` image URLs, `"1963"` strings for numbers — into the clean
 `#shared/types/listing` view models. Nothing raw crosses the server boundary.
 
+It also picks the right **image size** per surface (Funda serves `_klein` / `_middel` /
+`_groot` variants of every photo): the grid cards get `_middel`; the detail gallery gets
+each photo as `{ thumb: _klein, full: _groot }`, so the strip loads only the small files
+and a `_groot` is fetched when its photo is opened.
+
 ---
 
 ## Notes & decisions

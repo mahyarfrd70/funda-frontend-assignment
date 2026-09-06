@@ -1,4 +1,4 @@
-import type { FeatureGroup, ListingDetail, ListingSummary } from '#shared/types/listing'
+import type { FeatureGroup, ListingDetail, ListingPhoto, ListingSummary } from '#shared/types/listing'
 
 export interface RawListing {
   Id: string
@@ -70,7 +70,7 @@ function toHttps(url: string | undefined | null): string | null {
   return url ? url.replace(/^http:\/\//i, 'https://') : null
 }
 
-function resize(url: string, size: 'middel' | 'groot'): string {
+function resize(url: string, size: 'klein' | 'middel' | 'groot'): string {
   return url.replace(/_(klein|middel|groot|grotere)\.jpg$/i, `_${size}.jpg`)
 }
 
@@ -93,6 +93,12 @@ function stripHtml(value: string): string {
     .trim()
 }
 
+// the grid cards want the medium size, whichever size Funda handed us
+function summaryThumbnail(raw: RawListing): string | null {
+  const photo = toHttps(raw.FotoMedium ?? raw.Foto)
+  return photo ? resize(photo, 'middel') : null
+}
+
 function toSummary(raw: RawListing): ListingSummary {
   const koopprijs = raw.Koopprijs ?? null
   return {
@@ -108,7 +114,7 @@ function toSummary(raw: RawListing): ListingSummary {
     listedSince: raw.AangebodenSindsTekst ?? '',
     agent: raw.MakelaarNaam ?? '',
     isSold: raw.IsVerkocht || raw.IsVerkochtOfVerhuurd,
-    thumbnail: toHttps(raw.FotoMedium ?? raw.Foto),
+    thumbnail: summaryThumbnail(raw),
     coordinates: coordinates(raw.WGS84_X, raw.WGS84_Y),
     has360Tour: Boolean(raw.Heeft360GradenFoto),
     hasVideo: Boolean(raw.HeeftVideo),
@@ -121,12 +127,14 @@ export function normalizeListings(raw: RawListingsResponse): ListingSummary[] {
 }
 
 export function normalizeListingDetail(raw: RawDetail): ListingDetail {
-  const photos = (raw['Media-Foto'] ?? [])
+  // both sizes go to the client: `_klein` for the thumbnail strip, `_groot`
+  // fetched only when the visitor opens that photo
+  const photos: ListingPhoto[] = (raw['Media-Foto'] ?? [])
     .map(toHttps)
     .filter((url): url is string => url !== null)
-    .map((url) => resize(url, 'groot'))
+    .map((url) => ({ thumb: resize(url, 'klein'), full: resize(url, 'groot') }))
 
-  const mainPhoto = toHttps(raw.HoofdFoto) ?? photos[0] ?? null
+  const mainPhoto = toHttps(raw.HoofdFoto) ?? photos[0]?.full ?? null
   const koopprijs = raw.Koopprijs ?? null
 
   const features: FeatureGroup[] = (raw.Kenmerken ?? []).map((group) => ({

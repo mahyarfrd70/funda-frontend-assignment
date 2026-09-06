@@ -19,7 +19,7 @@ if (error.value) {
 useSeoMeta({
   title: () => (listing.value ? `${listing.value.address}, ${listing.value.city}` : 'Woning'),
   description: () => (listing.value ? listing.value.description.slice(0, 160) : ''),
-  ogImage: () => listing.value?.photos[0],
+  ogImage: () => listing.value?.photos[0]?.full,
 })
 </script>
 
